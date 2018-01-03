@@ -1,0 +1,32 @@
+cc_binary(
+    features = ["use_linker"],
+    name = "ComChibifireNetcodeIO.dll",
+    srcs = [
+        "sample/addons/ComChibifireFbxImporter/src/ComChibifireFbxImporter.cpp",
+        "sample/addons/ComChibifireFbxImporter/src/ComChibifireFbxImporter.h",
+        "thirdparty/fbx20181_1_fbxsdk_vs2015_win/lib/vs2015/x64/release/libfbxsdk-md.lib",
+        "thirdparty/cpp_bindings/bin/godot_cpp_bindings.lib",
+        "thirdparty/cpp_bindings/include/gdnative.hpp",
+        "thirdparty/godot_headers/gdnative_api_struct.gen.h",
+    ],
+    includes = [
+        "thirdparty/cppcodec",
+        "thirdparty/stb",
+        "thirdparty/draco/src/draco/src",
+        "thirdparty/cxxopts/include",
+        "thirdparty/fifo_map/src",
+        "thirdparty/fmt",
+        "thirdparty/fbx20181_1_fbxsdk_vs2015_win/include",
+        "thirdparty/mathfu/include",
+        "thirdparty/json/src",        
+        "thirdparty/FBX2glTF/src",
+        "thirdparty/godot/modules/gdnative/include",
+        "thirdparty/cpp_bindings/include/",
+        "thirdparty/cpp_bindings/include/core",
+    ],    
+    linkstatic = 1,
+    linkshared = 1,
+    copts = ["-O2", "/MD"],
+    linkopts = ["-NODEFAULTLIB:LIBCMT"],
+    deps = ["//:FBX2glTF.lib"]
+)
