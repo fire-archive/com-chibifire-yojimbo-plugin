@@ -1,0 +1,17 @@
+[general]
+
+singleton=false
+load_once=false
+symbol_prefix="godot_"
+
+[entry]
+
+X11.64=""
+Windows.64="res://addons/com_chibifire_networking_yojimbo/bin/windows.64/com_chibifire_networking_yojimbo.dll"
+OSX.64=""
+
+[dependencies]
+
+X11.64=[]
+Windows=[]
+OSX.64=[]
