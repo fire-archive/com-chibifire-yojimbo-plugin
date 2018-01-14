@@ -56,8 +56,8 @@ cc_library(
 
 cc_library(
     name = "netcode.io",
-    srcs = glob(["thirdparty/yojimbo/netcode.io/netcode.c"]),
-    includes = ["thirdparty/yojimbo/netcode.io", "thirdparty/libsodium/src/libsodium/include"],
+    srcs = glob(["thirdparty/netcode.io/netcode.c"]),
+    includes = ["thirdparty/netcode.io", "thirdparty/libsodium/src/libsodium/include"],
     defines = [
         "WINDOWS_BUILD=1"
     ],
@@ -66,8 +66,8 @@ cc_library(
 
 cc_library(
     name = "reliable.io",
-    srcs = glob(["thirdparty/yojimbo/reliable.io/reliable.c"]),
-    includes = ["thirdparty/yojimbo/reliable.io", "thirdparty/yojimbo/netcode.io", "thirdparty/libsodium/src/libsodium/include"],
+    srcs = glob(["thirdparty/reliable.io/reliable.c"]),
+    includes = ["thirdparty/reliable.io", "thirdparty/netcode.io", "thirdparty/libsodium/src/libsodium/include"],
     deps = ["netcode.io"]
 )
 
