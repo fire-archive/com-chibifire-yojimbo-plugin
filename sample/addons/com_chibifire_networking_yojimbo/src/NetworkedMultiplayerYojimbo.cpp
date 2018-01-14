@@ -133,4 +133,9 @@ void NetworkedMultiplayerYojimbo::_register_methods() {
     register_method("get_var", &NetworkedMultiplayerYojimbo::get_var);  
     register_method("put_packet", &NetworkedMultiplayerYojimbo::put_packet);
     register_method("put_var", &NetworkedMultiplayerYojimbo::put_var);
+
+    register_signal<NetworkedMultiplayerYojimbo>("connection_failed");
+    register_signal<NetworkedMultiplayerYojimbo>("connection_succeeded");
+    register_signal<NetworkedMultiplayerYojimbo>("peer_connected");
+    register_signal<NetworkedMultiplayerYojimbo>("server_disconnected");
 }

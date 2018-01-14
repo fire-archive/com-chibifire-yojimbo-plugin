@@ -15,6 +15,10 @@ name="Sample"
 main_scene="res://main.tscn"
 icon="res://icon.png"
 
+[editor_plugins]
+
+enabled=PoolStringArray( "com_chibifire_networking_yojimbo" )
+
 [gdnative]
 
 singletons=[  ]
