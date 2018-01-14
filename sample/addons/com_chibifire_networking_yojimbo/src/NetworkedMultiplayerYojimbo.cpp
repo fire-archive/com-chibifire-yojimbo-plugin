@@ -54,12 +54,6 @@ extern "C" void godot_nativescript_init(void *handle) {
     register_class<NetworkedMultiplayerYojimbo>();
 }
 
-Array NetworkedMultiplayerYojimbo::get_extensions() const {
-    PoolStringArray arr;
-    arr.push_back("fbx");
-    return Array(arr);
-}
-
 void NetworkedMultiplayerYojimbo::close_connection () {
 }
 
@@ -117,7 +111,6 @@ int NetworkedMultiplayerYojimbo::put_var(Variant var) {
 }
 
 void NetworkedMultiplayerYojimbo::_register_methods() {
-    register_method("_get_extensions", &NetworkedMultiplayerYojimbo::get_extensions);
     register_method("close_connection", &NetworkedMultiplayerYojimbo::close_connection);
     register_method("create_client", &NetworkedMultiplayerYojimbo::create_client);
     register_method("create_server", &NetworkedMultiplayerYojimbo::create_server);

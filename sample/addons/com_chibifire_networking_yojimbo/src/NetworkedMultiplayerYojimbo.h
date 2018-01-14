@@ -43,8 +43,6 @@ public:
     NetworkedMultiplayerYojimbo() {}
     ~NetworkedMultiplayerYojimbo() { close_connection(); }
 
-    Array get_extensions() const;
-
     void close_connection ();
     int create_client (String ip, int port, int in_bandwidth=0, int out_bandwidth = 0);
     int create_server (int port, int max_clients=32, int in_bandwidth=0, int out_bandwidth = 0);
