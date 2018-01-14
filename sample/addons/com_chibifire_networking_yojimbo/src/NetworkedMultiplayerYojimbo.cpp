@@ -60,6 +60,77 @@ Array NetworkedMultiplayerYojimbo::get_extensions() const {
     return Array(arr);
 }
 
+void NetworkedMultiplayerYojimbo::close_connection () {
+}
+
+int NetworkedMultiplayerYojimbo::create_client (String ip, int port, int in_bandwidth, int out_bandwidth) {
+    return 0;
+}
+
+int NetworkedMultiplayerYojimbo::create_server (int port, int max_clients, int in_bandwidth, int out_bandwidth) {
+    return 0;
+}
+
+void NetworkedMultiplayerYojimbo::set_bind_ip (String ip) {
+}
+
+int NetworkedMultiplayerYojimbo::get_connection_status() const {
+    return 0;
+}
+
+int NetworkedMultiplayerYojimbo::get_packet_peer() const {
+    return 0;
+}
+
+int NetworkedMultiplayerYojimbo::get_unique_id() const {
+    return 0;
+}
+
+void NetworkedMultiplayerYojimbo::poll() {
+}
+
+void NetworkedMultiplayerYojimbo::set_target_peer(int id) {
+}
+
+int NetworkedMultiplayerYojimbo::get_available_packet_count() const {
+    return 0;
+}
+
+PoolByteArray NetworkedMultiplayerYojimbo::get_packet() {
+    return PoolByteArray();
+}
+
+int NetworkedMultiplayerYojimbo::get_packet_error() const {
+    return 0;
+}
+
+Variant NetworkedMultiplayerYojimbo::get_var() {
+    return Variant();
+}
+
+int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
+    return 0;
+}
+
+int NetworkedMultiplayerYojimbo::put_var(Variant var) {
+    return 0;
+}
+
 void NetworkedMultiplayerYojimbo::_register_methods() {
     register_method("_get_extensions", &NetworkedMultiplayerYojimbo::get_extensions);
+    register_method("close_connection", &NetworkedMultiplayerYojimbo::close_connection);
+    register_method("create_client", &NetworkedMultiplayerYojimbo::create_client);
+    register_method("create_server", &NetworkedMultiplayerYojimbo::create_server);
+    register_method("set_bind_ip", &NetworkedMultiplayerYojimbo::set_bind_ip);
+    register_method("get_connection_status", &NetworkedMultiplayerYojimbo::get_connection_status);
+    register_method("get_packet_peer", &NetworkedMultiplayerYojimbo::get_packet_peer);
+    register_method("get_unique_id", &NetworkedMultiplayerYojimbo::get_unique_id);
+    register_method("poll", &NetworkedMultiplayerYojimbo::poll);
+    register_method("set_target_peer", &NetworkedMultiplayerYojimbo::set_target_peer);
+    register_method("get_available_packet_count", &NetworkedMultiplayerYojimbo::get_available_packet_count);
+    register_method("get_packet", &NetworkedMultiplayerYojimbo::get_packet);
+    register_method("get_packet_error", &NetworkedMultiplayerYojimbo::get_packet_error);
+    register_method("get_var", &NetworkedMultiplayerYojimbo::get_var);  
+    register_method("put_packet", &NetworkedMultiplayerYojimbo::put_packet);
+    register_method("put_var", &NetworkedMultiplayerYojimbo::put_var);
 }
