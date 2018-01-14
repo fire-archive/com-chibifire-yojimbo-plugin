@@ -23,7 +23,8 @@ cc_binary(
 cc_library(
     name = "sodium",
     srcs = [":sodium_version"] + glob(["thirdparty/libsodium/src/libsodium/**/*.c"]),
-    hdrs = glob(["thirdparty/libsodium/src/libsodium/**/*.h"]) + ["thirdparty/libsodium/src/libsodium/include/sodium/version.h"],
+    hdrs = glob(["thirdparty/libsodium/src/libsodium/**/*.h"]) + 
+    ["thirdparty/libsodium/src/libsodium/include/sodium/version.h"],
     includes = ["thirdparty/libsodium/src/libsodium/include/sodium",
     "thirdparty/libsodium/src/libsodium/include/private"],
     defines = [
@@ -57,7 +58,8 @@ cc_library(
 cc_library(
     name = "netcode.io",
     srcs = glob(["thirdparty/netcode.io/netcode.c"]),
-    includes = ["thirdparty/netcode.io", "thirdparty/libsodium/src/libsodium/include"],
+    includes = ["thirdparty/netcode.io", 
+    "thirdparty/libsodium/src/libsodium/include"],
     defines = [
         "WINDOWS_BUILD=1"
     ],
@@ -67,7 +69,9 @@ cc_library(
 cc_library(
     name = "reliable.io",
     srcs = glob(["thirdparty/reliable.io/reliable.c"]),
-    includes = ["thirdparty/reliable.io", "thirdparty/netcode.io", "thirdparty/libsodium/src/libsodium/include"],
+    includes = ["thirdparty/reliable.io", 
+    "thirdparty/netcode.io", 
+    "thirdparty/libsodium/src/libsodium/include"],
     deps = ["netcode.io"]
 )
 
@@ -76,8 +80,8 @@ cc_library(
     srcs =  [ "thirdparty/yojimbo/yojimbo.h", 
     "thirdparty/yojimbo/yojimbo.cpp", 
     "thirdparty/yojimbo/tlsf/tlsf.h", 
-    "thirdparty/yojimbo/tlsf/tlsf.c", 
-    ] + glob(["thirdparty/yojimbo/secure_client.c", "thirdparty/yojimbo/shared.h"]),
+    "thirdparty/yojimbo/tlsf/tlsf.c",
+    "thirdparty/yojimbo/shared.h"],
     defines = [
         "WINDOWS_BUILD=1"
     ],
