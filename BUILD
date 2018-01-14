@@ -4,6 +4,7 @@ cc_binary(
     srcs = [
         "sample/addons/com_chibifire_networking_yojimbo/src/NetworkedMultiplayerYojimbo.cpp",
         "sample/addons/com_chibifire_networking_yojimbo/src/NetworkedMultiplayerYojimbo.h",
+        "thirdparty/yojimbo/yojimbo.h",
         "thirdparty/cpp_bindings/bin/godot_cpp_bindings.lib",
         "thirdparty/cpp_bindings/include/gdnative.hpp",
         "thirdparty/godot_headers/gdnative_api_struct.gen.h",
