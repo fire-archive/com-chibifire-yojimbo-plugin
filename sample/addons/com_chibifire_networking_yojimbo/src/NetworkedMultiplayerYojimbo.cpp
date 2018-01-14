@@ -170,15 +170,15 @@ void NetworkedMultiplayerYojimbo::set_bind_ip(String ip) {
 }
 
 int NetworkedMultiplayerYojimbo::get_connection_status() const {
-    return 0;
+    return OK;
 }
 
 int NetworkedMultiplayerYojimbo::get_packet_peer() const {
-    return 0;
+    return OK;
 }
 
 int NetworkedMultiplayerYojimbo::get_unique_id() const {
-    return 0;
+    return OK;
 }
 
 void NetworkedMultiplayerYojimbo::poll() {
@@ -188,7 +188,7 @@ void NetworkedMultiplayerYojimbo::set_target_peer(int id) {
 }
 
 int NetworkedMultiplayerYojimbo::get_available_packet_count() const {
-    return 0;
+    return OK;
 }
 
 PoolByteArray NetworkedMultiplayerYojimbo::get_packet() {
@@ -196,7 +196,7 @@ PoolByteArray NetworkedMultiplayerYojimbo::get_packet() {
 }
 
 int NetworkedMultiplayerYojimbo::get_packet_error() const {
-    return 0;
+    return OK;
 }
 
 Variant NetworkedMultiplayerYojimbo::get_var() {
@@ -204,11 +204,11 @@ Variant NetworkedMultiplayerYojimbo::get_var() {
 }
 
 int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
-    return 0;
+    return OK;
 }
 
 int NetworkedMultiplayerYojimbo::put_var(Variant var) {
-    return 0;
+    return OK;
 }
 
 void NetworkedMultiplayerYojimbo::_register_methods() {

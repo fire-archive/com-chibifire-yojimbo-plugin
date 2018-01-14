@@ -36,7 +36,7 @@
 
 using namespace godot;
 
-class NetworkedMultiplayerYojimbo : public GodotScript<PacketPeer> {
+class NetworkedMultiplayerYojimbo : public GodotScript<NetworkedMultiplayer> {
 private:
     GODOT_CLASS(NetworkedMultiplayerYojimbo);
     Error initialize_yojimbo();
