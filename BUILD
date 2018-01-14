@@ -54,12 +54,46 @@ cc_library(
     copts = ['-I$(GENDIR)/thirdparty/libsodium/src/libsodium/include/sodium/']
 )
 
-cc_binary(
-    name = "netcode",
-    srcs = glob(["thirdparty/yojimbo/netcode.io/client_server.c", "thirdparty/yojimbo/netcode.io/netcode.c"]),
+cc_library(
+    name = "netcode.io",
+    srcs = glob(["thirdparty/yojimbo/netcode.io/netcode.c"]),
     includes = ["thirdparty/yojimbo/netcode.io", "thirdparty/libsodium/src/libsodium/include"],
     defines = [
         "WINDOWS_BUILD=1"
     ],
     deps = ["sodium", "mbedtls"]
 )
+
+cc_library(
+    name = "reliable.io",
+    srcs = glob(["thirdparty/yojimbo/reliable.io/reliable.c"]),
+    includes = ["thirdparty/yojimbo/reliable.io", "thirdparty/yojimbo/netcode.io", "thirdparty/libsodium/src/libsodium/include"],
+    deps = ["netcode.io"]
+)
+
+cc_library(
+    name = "yojimbo",
+    srcs =  ["thirdparty/yojimbo/secure_client.cpp",
+    "thirdparty/yojimbo/yojimbo.h", 
+    "thirdparty/yojimbo/yojimbo.cpp", 
+    "thirdparty/yojimbo/tlsf/tlsf.h", 
+    "thirdparty/yojimbo/tlsf/tlsf.c", 
+    ] + glob(["thirdparty/yojimbo/secure_client.c", "thirdparty/yojimbo/shared.h"]),
+    defines = [
+        "WINDOWS_BUILD=1"
+    ],
+    deps = ["reliable.io"]
+)
+
+cc_binary(
+    name = "yojimbo_secure_server",
+    srcs =  ["thirdparty/yojimbo/secure_server.cpp"],
+    deps = ["yojimbo"]
+)
+
+cc_binary(
+    name = "yojimbo_secure_client",
+    srcs =  ["thirdparty/yojimbo/secure_client.cpp"],
+    deps = ["yojimbo"]
+)
+
