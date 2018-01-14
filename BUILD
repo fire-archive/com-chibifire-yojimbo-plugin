@@ -25,8 +25,7 @@ cc_library(
     srcs = [":sodium_version"] + glob(["thirdparty/libsodium/src/libsodium/**/*.c"]),
     hdrs = glob(["thirdparty/libsodium/src/libsodium/**/*.h"]) + ["thirdparty/libsodium/src/libsodium/include/sodium/version.h"],
     includes = ["thirdparty/libsodium/src/libsodium/include/sodium",
-    "thirdparty/libsodium/src/libsodium/include/private",
-    "thirdparty/libsodium_version/include"],
+    "thirdparty/libsodium/src/libsodium/include/private"],
     defines = [
         "SODIUM_STATIC"
     ],
@@ -53,4 +52,14 @@ cc_library(
         "WINDOWS_BUILD=1"
     ],
     copts = ['-I$(GENDIR)/thirdparty/libsodium/src/libsodium/include/sodium/']
+)
+
+cc_binary(
+    name = "netcode",
+    srcs = glob(["thirdparty/yojimbo/netcode.io/client_server.c", "thirdparty/yojimbo/netcode.io/netcode.c"]),
+    includes = ["thirdparty/yojimbo/netcode.io", "thirdparty/libsodium/src/libsodium/include"],
+    defines = [
+        "WINDOWS_BUILD=1"
+    ],
+    deps = ["sodium", "mbedtls"]
 )
