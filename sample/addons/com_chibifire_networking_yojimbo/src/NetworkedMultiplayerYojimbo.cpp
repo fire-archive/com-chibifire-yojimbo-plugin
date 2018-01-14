@@ -23,7 +23,7 @@
 
 // clang-format off
 #include <Reference.hpp>
-#include <core/Godot.hpp>
+#include <Godot.hpp>
 
 #include "NetworkedMultiplayerYojimbo.h"
 #include <Animation.hpp>
@@ -41,13 +41,16 @@ using namespace godot;
 using godot::Directory;
 using godot::Ref;
 
-GDNATIVE_INIT(godot_gdnative_init_options *options) {
+extern "C" void godot_gdnative_init(godot_gdnative_init_options *options) {
+    Godot::gdnative_init(options);
 }
 
-GDNATIVE_TERMINATE(godot_gdnative_terminate_options *options) {
+extern "C" void godot_gdnative_terminate(godot_gdnative_terminate_options *options) {
+    Godot::gdnative_terminate(options);
 }
 
-NATIVESCRIPT_INIT() {
+extern "C" void godot_nativescript_init(void *handle) {
+    Godot::nativescript_init(handle);
     register_class<NetworkedMultiplayerYojimbo>();
 }
 

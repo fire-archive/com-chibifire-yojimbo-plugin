@@ -1,5 +1,5 @@
 cc_binary(
-    features = ["use_linker"],
+    features = ["use_linker", "windows_export_all_symbols"],
     name = "com_chibifire_networking_yojimbo.dll",
     srcs = [
         "sample/addons/com_chibifire_networking_yojimbo/src/NetworkedMultiplayerYojimbo.cpp",
@@ -17,7 +17,7 @@ cc_binary(
     linkshared = 1,
     copts = ["-O2", "/MD"],
     linkopts = ["-NODEFAULTLIB:LIBCMT"],
-    deps = []
+    deps = ["yojimbo"]
 )
 
 cc_library(
@@ -73,8 +73,7 @@ cc_library(
 
 cc_library(
     name = "yojimbo",
-    srcs =  ["thirdparty/yojimbo/secure_client.cpp",
-    "thirdparty/yojimbo/yojimbo.h", 
+    srcs =  [ "thirdparty/yojimbo/yojimbo.h", 
     "thirdparty/yojimbo/yojimbo.cpp", 
     "thirdparty/yojimbo/tlsf/tlsf.h", 
     "thirdparty/yojimbo/tlsf/tlsf.c", 
@@ -96,4 +95,3 @@ cc_binary(
     srcs =  ["thirdparty/yojimbo/secure_client.cpp"],
     deps = ["yojimbo"]
 )
-
