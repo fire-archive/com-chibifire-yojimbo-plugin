@@ -43,3 +43,14 @@ genrule(
     s/@SODIUM_LIBRARY_MINIMAL_DEF@//g
     ' $< > $@""",
 )
+
+cc_library(
+    name = "mbedtls",
+    srcs = glob(["thirdparty/mbedtls/library/*.c"]),
+    hdrs = glob(["thirdparty/mbedtls/include/**/*.h"]),
+    includes = ["thirdparty/mbedtls/include"],
+    defines = [
+        "WINDOWS_BUILD=1"
+    ],
+    copts = ['-I$(GENDIR)/thirdparty/libsodium/src/libsodium/include/sodium/']
+)
