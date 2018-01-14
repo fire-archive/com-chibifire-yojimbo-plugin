@@ -19,3 +19,27 @@ cc_binary(
     linkopts = ["-NODEFAULTLIB:LIBCMT"],
     deps = []
 )
+
+cc_library(
+    name = "sodium",
+    srcs = [":sodium_version"] + glob(["thirdparty/libsodium/src/libsodium/**/*.c"]),
+    hdrs = glob(["thirdparty/libsodium/src/libsodium/**/*.h"]) + ["thirdparty/libsodium/src/libsodium/include/sodium/version.h"],
+    includes = ["thirdparty/libsodium/src/libsodium/include/sodium",
+    "thirdparty/libsodium/src/libsodium/include/private",
+    "thirdparty/libsodium_version/include"],
+    defines = [
+        "SODIUM_STATIC"
+    ],
+    copts = ['-I$(GENDIR)/thirdparty/libsodium/src/libsodium/include/sodium/']
+)
+
+genrule(
+    name = 'sodium_version',
+    srcs = ['thirdparty/libsodium/src/libsodium/include/sodium/version.h.in'],
+    outs = ['thirdparty/libsodium/src/libsodium/include/sodium/version.h'],
+    cmd = """sed 's/@VERSION@/1.0.11/g
+    s/@SODIUM_LIBRARY_VERSION_MAJOR@/10/g
+    s/@SODIUM_LIBRARY_VERSION_MINOR@/1/g
+    s/@SODIUM_LIBRARY_MINIMAL_DEF@//g
+    ' $< > $@""",
+)
