@@ -33,7 +33,6 @@
 #include <ProjectSettings.hpp>
 #include <Ref.hpp>
 #include <Vector3.hpp>
-
 #include "thirdparty/yojimbo/yojimbo.h"
 // clang-format on
 
@@ -45,65 +44,65 @@ using godot::Directory;
 using godot::Ref;
 
 extern "C" void godot_gdnative_init(godot_gdnative_init_options *options) {
-    Godot::gdnative_init(options);
+	Godot::gdnative_init(options);
 }
 
 extern "C" void godot_gdnative_terminate(godot_gdnative_terminate_options *options) {
-    Godot::gdnative_terminate(options);
+	Godot::gdnative_terminate(options);
 }
 
 extern "C" void godot_nativescript_init(void *handle) {
-    Godot::nativescript_init(handle);
-    register_class<NetworkedMultiplayerYojimbo>();
+	Godot::nativescript_init(handle);
+	register_class<NetworkedMultiplayerYojimbo>();
 }
 
 Error NetworkedMultiplayerYojimbo::initialize_yojimbo() {
-    if (!InitializeYojimbo()) {
-        //printf( "error: failed to initialize Yojimbo!\n" );
-        return OK;
-    }
+	if (!InitializeYojimbo()) {
+		//printf( "error: failed to initialize Yojimbo!\n" );
+		return OK;
+	}
 
-    yojimbo_log_level(YOJIMBO_LOG_LEVEL_INFO);
-    return OK;
+	yojimbo_log_level(YOJIMBO_LOG_LEVEL_INFO);
+	return OK;
 }
 
 void NetworkedMultiplayerYojimbo::close_connection() {
-    ShutdownYojimbo();
+	ShutdownYojimbo();
 }
 
 int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandwidth, int out_bandwidth) {
-    if (initialize_yojimbo() != OK) {
-        return FAILED;
-    }
+	if (initialize_yojimbo() != OK) {
+		return FAILED;
+	}
 
-    yojimbo::Matcher matcher(yojimbo::GetDefaultAllocator());
+	yojimbo::Matcher matcher(yojimbo::GetDefaultAllocator());
 
-    // print( "\nconnecting client (secure)\n" );
+	// print( "\nconnecting client (secure)\n" );
 
-    uint64_t clientId = 0;
-    uint64_t ProtocolId = 0;
-    random_bytes((uint8_t *)&clientId, 8);
-    //printf( "client id is %.16" PRIx64 "\n", clientId );
+	uint64_t clientId = 0;
+	uint64_t ProtocolId = 0;
+	random_bytes((uint8_t *)&clientId, 8);
+	//printf( "client id is %.16" PRIx64 "\n", clientId );
 
-    if (!matcher.Initialize()) {
-        // print( "error: failed to initialize matcher\n" );
-        return FAILED;
-    }
+	if (!matcher.Initialize()) {
+		// print( "error: failed to initialize matcher\n" );
+		return FAILED;
+	}
 
-    // printf( "requesting match from https://localhost:8080\n" );
+	// printf( "requesting match from https://localhost:8080\n" );
 
-    matcher.RequestMatch(ProtocolId, clientId, false);
+	matcher.RequestMatch(ProtocolId, clientId, false);
 
-    if (matcher.GetMatchStatus() == MATCH_FAILED) {
-        // printf( "\nRequest match failed. Is the matcher running? Please run \"premake5 matcher\" before you connect a secure client\n" );
-        return 1;
-    }
+	if (matcher.GetMatchStatus() == MATCH_FAILED) {
+		// printf( "\nRequest match failed. Is the matcher running? Please run \"premake5 matcher\" before you connect a secure client\n" );
+		return 1;
+	}
 
-    uint8_t connectToken[ConnectTokenBytes];
-    matcher.GetConnectToken(connectToken);
+	uint8_t connectToken[ConnectTokenBytes];
+	matcher.GetConnectToken(connectToken);
 
-    // printf( "received connect token from matcher\n" );
-    /*
+	// printf( "received connect token from matcher\n" );
+	/*
     double time = 100.0;
 
     ClientServerConfig config;
@@ -159,26 +158,26 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
     client.Disconnect();
     */
 
-    return OK;
+	return OK;
 }
 
 int NetworkedMultiplayerYojimbo::create_server(int port, int max_clients, int in_bandwidth, int out_bandwidth) {
-    return ERR_CANT_CONNECT;
+	return ERR_CANT_CONNECT;
 }
 
 void NetworkedMultiplayerYojimbo::set_bind_ip(String ip) {
 }
 
 int NetworkedMultiplayerYojimbo::get_connection_status() const {
-    return OK;
+	return OK;
 }
 
 int NetworkedMultiplayerYojimbo::get_packet_peer() const {
-    return OK;
+	return OK;
 }
 
 int NetworkedMultiplayerYojimbo::get_unique_id() const {
-    return OK;
+	return OK;
 }
 
 void NetworkedMultiplayerYojimbo::poll() {
@@ -188,49 +187,49 @@ void NetworkedMultiplayerYojimbo::set_target_peer(int id) {
 }
 
 int NetworkedMultiplayerYojimbo::get_available_packet_count() const {
-    return OK;
+	return OK;
 }
 
 PoolByteArray NetworkedMultiplayerYojimbo::get_packet() {
-    return PoolByteArray();
+	return PoolByteArray();
 }
 
 int NetworkedMultiplayerYojimbo::get_packet_error() const {
-    return OK;
+	return OK;
 }
 
 Variant NetworkedMultiplayerYojimbo::get_var() {
-    return Variant();
+	return Variant();
 }
 
 int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
-    return OK;
+	return OK;
 }
 
 int NetworkedMultiplayerYojimbo::put_var(Variant var) {
-    return OK;
+	return OK;
 }
 
 void NetworkedMultiplayerYojimbo::_register_methods() {
-    register_method("close_connection", &NetworkedMultiplayerYojimbo::close_connection);
-    register_method("create_client", &NetworkedMultiplayerYojimbo::create_client);
-    register_method("create_client_yojimbo", &NetworkedMultiplayerYojimbo::create_client);
-    register_method("create_server", &NetworkedMultiplayerYojimbo::create_server);
-    register_method("set_bind_ip", &NetworkedMultiplayerYojimbo::set_bind_ip);
-    register_method("get_connection_status", &NetworkedMultiplayerYojimbo::get_connection_status);
-    register_method("get_packet_peer", &NetworkedMultiplayerYojimbo::get_packet_peer);
-    register_method("get_unique_id", &NetworkedMultiplayerYojimbo::get_unique_id);
-    register_method("poll", &NetworkedMultiplayerYojimbo::poll);
-    register_method("set_target_peer", &NetworkedMultiplayerYojimbo::set_target_peer);
-    register_method("get_available_packet_count", &NetworkedMultiplayerYojimbo::get_available_packet_count);
-    register_method("get_packet", &NetworkedMultiplayerYojimbo::get_packet);
-    register_method("get_packet_error", &NetworkedMultiplayerYojimbo::get_packet_error);
-    register_method("get_var", &NetworkedMultiplayerYojimbo::get_var);
-    register_method("put_packet", &NetworkedMultiplayerYojimbo::put_packet);
-    register_method("put_var", &NetworkedMultiplayerYojimbo::put_var);
- 
-    register_signal<NetworkedMultiplayerYojimbo>("connection_failed");
-    register_signal<NetworkedMultiplayerYojimbo>("connection_succeeded");
-    register_signal<NetworkedMultiplayerYojimbo>("peer_connected");
-    register_signal<NetworkedMultiplayerYojimbo>("server_disconnected");
+	register_method("close_connection", &NetworkedMultiplayerYojimbo::close_connection);
+	register_method("create_client", &NetworkedMultiplayerYojimbo::create_client);
+	register_method("create_client_yojimbo", &NetworkedMultiplayerYojimbo::create_client);
+	register_method("create_server", &NetworkedMultiplayerYojimbo::create_server);
+	register_method("set_bind_ip", &NetworkedMultiplayerYojimbo::set_bind_ip);
+	register_method("get_connection_status", &NetworkedMultiplayerYojimbo::get_connection_status);
+	register_method("get_packet_peer", &NetworkedMultiplayerYojimbo::get_packet_peer);
+	register_method("get_unique_id", &NetworkedMultiplayerYojimbo::get_unique_id);
+	register_method("poll", &NetworkedMultiplayerYojimbo::poll);
+	register_method("set_target_peer", &NetworkedMultiplayerYojimbo::set_target_peer);
+	register_method("get_available_packet_count", &NetworkedMultiplayerYojimbo::get_available_packet_count);
+	register_method("get_packet", &NetworkedMultiplayerYojimbo::get_packet);
+	register_method("get_packet_error", &NetworkedMultiplayerYojimbo::get_packet_error);
+	register_method("get_var", &NetworkedMultiplayerYojimbo::get_var);
+	register_method("put_packet", &NetworkedMultiplayerYojimbo::put_packet);
+	register_method("put_var", &NetworkedMultiplayerYojimbo::put_var);
+
+	register_signal<NetworkedMultiplayerYojimbo>("connection_failed");
+	register_signal<NetworkedMultiplayerYojimbo>("connection_succeeded");
+	register_signal<NetworkedMultiplayerYojimbo>("peer_connected");
+	register_signal<NetworkedMultiplayerYojimbo>("server_disconnected");
 }

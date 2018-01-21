@@ -23,45 +23,45 @@
 
 #pragma once
 
+#include "thirdparty/yojimbo/yojimbo.h"
 #include <Animation.hpp>
 #include <ArrayMesh.hpp>
-#include <NetworkedMultiplayerPeer.hpp>
+#include <NetworkedMultiplayerPeerGDNative.hpp>
 #include <Node.hpp>
 #include <Ref.hpp>
 #include <Reference.hpp>
 #include <String.hpp>
 #include <core/Godot.hpp>
 #include <core/GodotGlobal.hpp>
-#include "thirdparty/yojimbo/yojimbo.h"
 
 using namespace godot;
 
-class NetworkedMultiplayerYojimbo : public GodotScript<NetworkedMultiplayerPeer> {
+class NetworkedMultiplayerYojimbo : public GodotScript<NetworkedMultiplayerPeerGDNative> {
 private:
-    GODOT_CLASS(NetworkedMultiplayerYojimbo);
-    Error initialize_yojimbo();
+	GODOT_CLASS(NetworkedMultiplayerYojimbo);
+	Error initialize_yojimbo();
 
 public:
-    NetworkedMultiplayerYojimbo() {}
-    ~NetworkedMultiplayerYojimbo() { close_connection(); }
+	NetworkedMultiplayerYojimbo() {}
+	~NetworkedMultiplayerYojimbo() { close_connection(); }
 
-    void close_connection();
-    int create_client(String ip, int port, int in_bandwidth=0, int out_bandwidth = 0);
-    int create_server(int port, int max_clients=32, int in_bandwidth=0, int out_bandwidth = 0);
-    void set_bind_ip(String ip);
+	void close_connection();
+	int create_client(String ip, int port, int in_bandwidth = 0, int out_bandwidth = 0);
+	int create_server(int port, int max_clients = 32, int in_bandwidth = 0, int out_bandwidth = 0);
+	void set_bind_ip(String ip);
 
-    int get_connection_status() const;
-    int get_packet_peer() const;
-    int get_unique_id() const;
-    void poll();
-    void set_target_peer(int id);
-  
-    int get_available_packet_count() const;
-    PoolByteArray get_packet();
-    int get_packet_error() const;
-    Variant get_var();
-    int put_packet(PoolByteArray buffer);
-    int put_var(Variant var);
+	int get_connection_status() const;
+	int get_packet_peer() const;
+	int get_unique_id() const;
+	void poll();
+	void set_target_peer(int id);
 
-    static void _register_methods();
+	int get_available_packet_count() const;
+	PoolByteArray get_packet();
+	int get_packet_error() const;
+	Variant get_var();
+	int put_packet(PoolByteArray buffer);
+	int put_var(Variant var);
+
+	static void _register_methods();
 };

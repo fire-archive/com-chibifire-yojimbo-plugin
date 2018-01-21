@@ -1,11 +1,12 @@
 extends Control
 
-var native_yojimbo = preload("res://addons/com_chibifire_networking_yojimbo/com_chibifire_networking_yojimbo.gdns")
+export (NativeScript) var native_yojimbo
 var yojimbo 
 
-func _ready():	
+func _ready():
 	yojimbo = native_yojimbo.new()
 	yojimbo.create_client("127.0.0.1", 4000, 0, 0)
+	get_tree().set_network_peer(yojimbo)
 
 func _on_Button_pressed():
 	pass
