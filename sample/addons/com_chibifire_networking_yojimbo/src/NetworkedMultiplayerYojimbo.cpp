@@ -69,6 +69,11 @@ Error NetworkedMultiplayerYojimbo::initialize_yojimbo() {
 }
 
 void NetworkedMultiplayerYojimbo::close_connection() {
+	server->Stop();
+	if (server != nullptr) {
+		delete server;
+	}
+
 	ShutdownYojimbo();
 }
 
@@ -79,7 +84,7 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 
 	yojimbo::Matcher matcher(yojimbo::GetDefaultAllocator());
 
-	printf("\nconnecting client (secure)\n");
+	Godot::print("connecting client (secure)");
 
 	uint64_t clientId = 0;
 	uint64_t ProtocolId = 0;
@@ -148,6 +153,10 @@ int NetworkedMultiplayerYojimbo::create_server(int port, int max_clients, int in
 		return FAILED;
 	}
 
+	if (server != nullptr) {
+		return FAILED;
+	}
+
 	double time = OS::get_ticks_msec();
 
 	config.protocolId = ProtocolId;
@@ -157,24 +166,11 @@ int NetworkedMultiplayerYojimbo::create_server(int port, int max_clients, int in
 		0x43, 0x71, 0xd6, 0x2c, 0xd1, 0x99, 0x27, 0x26,
 		0x6b, 0x3c, 0x60, 0xf4, 0xb7, 0x15, 0xab, 0xa1 };
 
-	yojimbo::Server server(yojimbo::GetDefaultAllocator(), privateKey, yojimbo::Address("127.0.0.1", port), config, adapter, time);
+	server = new yojimbo::Server(yojimbo::GetDefaultAllocator(), privateKey, yojimbo::Address("127.0.0.1", port), config, adapter, time);
 
-	printf("\nconnecting client (secure)\n");
+	Godot::print("starting server (secure)");
+	server->Start(max_clients);
 
-	uint64_t clientId = 0;
-	uint64_t ProtocolId = 0;
-	random_bytes((uint8_t *)&clientId, 8);
-	printf("client id is %.16 \n", clientId);
-	server.Start(max_clients);
-	// Poll
-	if (!server.IsRunning()) {
-		return FAILED;
-	}
-	server.SendPackets();
-	server.ReceivePackets();
-	server.AdvanceTime(OS::get_ticks_msec());
-	// End poll
-	server.Stop();
 	return OK;
 }
 
@@ -194,6 +190,12 @@ int NetworkedMultiplayerYojimbo::get_unique_id() const {
 }
 
 void NetworkedMultiplayerYojimbo::poll() {
+	if (!server->IsRunning()) {
+		return;
+	}
+	server->SendPackets();
+	server->ReceivePackets();
+	server->AdvanceTime(OS::get_ticks_msec());
 }
 
 void NetworkedMultiplayerYojimbo::set_target_peer(int id) {

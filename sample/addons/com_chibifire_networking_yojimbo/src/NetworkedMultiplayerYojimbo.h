@@ -41,11 +41,13 @@ private:
 	GODOT_CLASS(NetworkedMultiplayerYojimbo);
 	Error initialize_yojimbo();
 	yojimbo::ClientServerConfig config;
+	yojimbo::Server *server;
 
 public:
 	NetworkedMultiplayerYojimbo() {
 	}
-	~NetworkedMultiplayerYojimbo() { close_connection(); }
+	~NetworkedMultiplayerYojimbo() {
+	}
 
 	void close_connection();
 	int create_client(String ip, int port, int in_bandwidth = 0, int out_bandwidth = 0);
