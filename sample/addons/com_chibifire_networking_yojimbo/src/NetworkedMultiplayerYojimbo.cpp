@@ -34,6 +34,7 @@
 #include <Ref.hpp>
 #include <Vector3.hpp>
 #include "thirdparty/yojimbo/yojimbo.h"
+#include "thirdparty/yojimbo/shared.h"
 // clang-format on
 
 bool verboseOutput = false;
@@ -62,7 +63,7 @@ Error NetworkedMultiplayerYojimbo::initialize_yojimbo() {
 		return OK;
 	}
 
-	yojimbo_log_level(YOJIMBO_LOG_LEVEL_INFO);
+	yojimbo_log_level(YOJIMBO_LOG_LEVEL_DEBUG);
 	return OK;
 }
 
@@ -162,7 +163,34 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 }
 
 int NetworkedMultiplayerYojimbo::create_server(int port, int max_clients, int in_bandwidth, int out_bandwidth) {
-	return ERR_CANT_CONNECT;
+	if (initialize_yojimbo() != OK) {
+		return FAILED;
+	}
+
+	ClientServerConfig config;
+
+	config.protocolId = ProtocolId;
+
+	double time = 0.0;
+
+	uint8_t privateKey[KeyBytes] = { 0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea,
+		0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4,
+		0x43, 0x71, 0xd6, 0x2c, 0xd1, 0x99, 0x27, 0x26,
+		0x6b, 0x3c, 0x60, 0xf4, 0xb7, 0x15, 0xab, 0xa1 };
+
+	Server server(GetDefaultAllocator(), privateKey, Address("127.0.0.1", port), config, adapter, time);
+
+	// print( "\nconnecting client (secure)\n" );
+
+	uint64_t clientId = 0;
+	uint64_t ProtocolId = 0;
+	random_bytes((uint8_t *)&clientId, 8);
+	//printf( "client id is %.16" PRIx64 "\n", clientId );
+
+	server.Start(max_clients);
+	server.Stop();
+
+	return OK;
 }
 
 void NetworkedMultiplayerYojimbo::set_bind_ip(String ip) {
