@@ -60,8 +60,8 @@ extern "C" void godot_nativescript_init(void *handle) {
 
 Error NetworkedMultiplayerYojimbo::initialize_yojimbo() {
 	if (!InitializeYojimbo()) {
-		//printf( "error: failed to initialize Yojimbo!\n" );
-		return OK;
+		printf("error: failed to initialize Yojimbo!\n");
+		return FAILED;
 	}
 
 	yojimbo_log_level(YOJIMBO_LOG_LEVEL_DEBUG);
@@ -79,19 +79,19 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 
 	yojimbo::Matcher matcher(yojimbo::GetDefaultAllocator());
 
-	// print( "\nconnecting client (secure)\n" );
+	printf("\nconnecting client (secure)\n");
 
 	uint64_t clientId = 0;
 	uint64_t ProtocolId = 0;
 	random_bytes((uint8_t *)&clientId, 8);
-	//printf( "client id is %.16" PRIx64 "\n", clientId );
+	printf("client id is %.16" PRIx64 "\n", clientId);
 
 	if (!matcher.Initialize()) {
-		// print( "error: failed to initialize matcher\n" );
+		printf("error: failed to initialize matcher\n");
 		return FAILED;
 	}
 
-	// printf( "requesting match from https://localhost:8080\n" );
+	printf("requesting match from https://localhost:8080\n");
 
 	matcher.RequestMatch(ProtocolId, clientId, false);
 
@@ -139,7 +139,6 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 		return FAILED;
 	}
 	// End poll
-
 	client.Disconnect();
 	return OK;
 }
