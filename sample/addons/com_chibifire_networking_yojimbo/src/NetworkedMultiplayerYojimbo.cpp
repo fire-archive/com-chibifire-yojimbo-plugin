@@ -24,6 +24,7 @@
 // clang-format off
 #include <Reference.hpp>
 #include <Godot.hpp>
+#include <OS.hpp>
 
 #include "NetworkedMultiplayerYojimbo.h"
 #include <Animation.hpp>
@@ -103,62 +104,43 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 	matcher.GetConnectToken(connectToken);
 
 	// printf( "received connect token from matcher\n" );
-	/*
-    double time = 100.0;
 
-    ClientServerConfig config;
-    config.protocolId = ProtocolId;
+	double time = OS::get_ticks_msec();
 
-    Client client( GetDefaultAllocator(), Address("0.0.0.0"), config, adapter, time );
+	ClientServerConfig config;
+	config.protocolId = ProtocolId;
 
-    Address serverAddress( "127.0.0.1", ServerPort );
+	Client client(GetDefaultAllocator(), Address("0.0.0.0"), config, adapter, time);
 
-    if ( argc == 2 )
-    {
-        Address commandLineAddress( argv[1] );
-        if ( commandLineAddress.IsValid() )
-        {
-            if ( commandLineAddress.GetPort() == 0 )
-                commandLineAddress.SetPort( ServerPort );
-            serverAddress = commandLineAddress;
-        }
-    }
+	Address serverAddress("127.0.0.1", port);
 
-    client.Connect( clientId, connectToken );
+	client.Connect(clientId, connectToken);
 
-    if ( client.IsDisconnected() )
-        return 1;
+	if (client.IsDisconnected()) {
+		return FAILED;
+	}
 
-    char addressString[256];
-    client.GetAddress().ToString( addressString, sizeof( addressString ) );
-    // printf( "client address is %s\n", addressString );
+	char addressString[256];
+	client.GetAddress().ToString(addressString, sizeof(addressString));
+	printf("client address is %s\n", addressString);
 
-    const double deltaTime = 0.1;
+	// signal( SIGINT, interrupt_handler );
 
-    // signal( SIGINT, interrupt_handler );    
+	// Poll
+	client.SendPackets();
+	client.ReceivePackets();
+	if (client.IsDisconnected()) {
+		return FAILED;
+	}
 
-    while ( !quit )
-    {
-        client.SendPackets();
+	client.AdvanceTime(OS::get_ticks_msec());
 
-        client.ReceivePackets();
+	if (client.ConnectionFailed()) {
+		return FAILED;
+	}
+	// End poll
 
-        if ( client.IsDisconnected() )
-            break;
-     
-        time += deltaTime;
-
-        client.AdvanceTime( time );
-
-        if ( client.ConnectionFailed() )
-            break;
-
-        yojimbo_sleep( deltaTime );    
-    }
-
-    client.Disconnect();
-    */
-
+	client.Disconnect();
 	return OK;
 }
 
@@ -167,29 +149,33 @@ int NetworkedMultiplayerYojimbo::create_server(int port, int max_clients, int in
 		return FAILED;
 	}
 
-	ClientServerConfig config;
+	double time = OS::get_ticks_msec();
 
 	config.protocolId = ProtocolId;
 
-	double time = 0.0;
-
-	uint8_t privateKey[KeyBytes] = { 0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea,
+	uint8_t privateKey[yojimbo::KeyBytes] = { 0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea,
 		0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4,
 		0x43, 0x71, 0xd6, 0x2c, 0xd1, 0x99, 0x27, 0x26,
 		0x6b, 0x3c, 0x60, 0xf4, 0xb7, 0x15, 0xab, 0xa1 };
 
-	Server server(GetDefaultAllocator(), privateKey, Address("127.0.0.1", port), config, adapter, time);
+	yojimbo::Server server(yojimbo::GetDefaultAllocator(), privateKey, yojimbo::Address("127.0.0.1", port), config, adapter, time);
 
-	// print( "\nconnecting client (secure)\n" );
+	printf("\nconnecting client (secure)\n");
 
 	uint64_t clientId = 0;
 	uint64_t ProtocolId = 0;
 	random_bytes((uint8_t *)&clientId, 8);
-	//printf( "client id is %.16" PRIx64 "\n", clientId );
-
+	printf("client id is %.16 \n", clientId);
 	server.Start(max_clients);
+	// Poll
+	if (!server.IsRunning()) {
+		return FAILED;
+	}
+	server.SendPackets();
+	server.ReceivePackets();
+	server.AdvanceTime(OS::get_ticks_msec());
+	// End poll
 	server.Stop();
-
 	return OK;
 }
 

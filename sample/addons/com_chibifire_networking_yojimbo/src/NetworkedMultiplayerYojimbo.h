@@ -40,9 +40,11 @@ class NetworkedMultiplayerYojimbo : public GodotScript<NetworkedMultiplayerPeerG
 private:
 	GODOT_CLASS(NetworkedMultiplayerYojimbo);
 	Error initialize_yojimbo();
+	yojimbo::ClientServerConfig config;
 
 public:
-	NetworkedMultiplayerYojimbo() {}
+	NetworkedMultiplayerYojimbo() {
+	}
 	~NetworkedMultiplayerYojimbo() { close_connection(); }
 
 	void close_connection();
