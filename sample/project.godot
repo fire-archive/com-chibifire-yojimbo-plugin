@@ -23,7 +23,13 @@ singletons=[  ]
 
 multithread/thread_rid_pool_prealloc=60
 
+[physics]
+
+2d/physics_engine="GodotPhysics"
+2d/thread_model=2
+
 [rendering]
 
+threads/thread_model=2
 vram_compression/import_etc2=false
 viewport/default_environment="res://default_env.tres"
