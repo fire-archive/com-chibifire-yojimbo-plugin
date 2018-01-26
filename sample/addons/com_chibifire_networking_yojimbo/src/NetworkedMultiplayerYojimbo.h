@@ -42,9 +42,11 @@ private:
 	Error initialize_yojimbo();
 	yojimbo::ClientServerConfig config;
 	yojimbo::Server *server;
+	yojimbo::Client *client;
+	yojimbo::Matcher *matcher;
 
 public:
-	NetworkedMultiplayerYojimbo() {
+	NetworkedMultiplayerYojimbo() : config{ 0 } {
 	}
 	~NetworkedMultiplayerYojimbo() {
 	}

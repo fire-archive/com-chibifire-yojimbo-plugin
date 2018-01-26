@@ -59,8 +59,15 @@ extern "C" void godot_nativescript_init(void *handle) {
 }
 
 Error NetworkedMultiplayerYojimbo::initialize_yojimbo() {
+	if (server != nullptr) {
+		return OK;
+	}
+	if (client != nullptr) {
+		return OK;
+	}
+
 	if (!InitializeYojimbo()) {
-		printf("error: failed to initialize Yojimbo!\n");
+		Godot::print("error: failed to initialize Yojimbo!");
 		return FAILED;
 	}
 
@@ -69,9 +76,17 @@ Error NetworkedMultiplayerYojimbo::initialize_yojimbo() {
 }
 
 void NetworkedMultiplayerYojimbo::close_connection() {
-	server->Stop();
+	if (server) {
+		server->Stop();
+	}
 	if (server != nullptr) {
 		delete server;
+	}
+	if (client) {
+		client->Disconnect();
+	}
+	if (server != nullptr) {
+		delete client;
 	}
 
 	ShutdownYojimbo();
@@ -82,69 +97,62 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 		return FAILED;
 	}
 
-	yojimbo::Matcher matcher(yojimbo::GetDefaultAllocator());
+	if (client != nullptr) {
+		return FAILED;
+	}
+
+	matcher = new yojimbo::Matcher(yojimbo::GetDefaultAllocator());
 
 	Godot::print("connecting client (secure)");
 
 	uint64_t clientId = 0;
 	uint64_t ProtocolId = 0;
 	random_bytes((uint8_t *)&clientId, 8);
-	printf("client id is %.16" PRIx64 "\n", clientId);
 
-	if (!matcher.Initialize()) {
-		printf("error: failed to initialize matcher\n");
+	char buffer[100];
+	snprintf(buffer, 100, "client id is %.16" PRIx64, clientId);
+	Godot::print(buffer);
+
+	if (!matcher->Initialize()) {
+		Godot::print("error: failed to initialize matcher");
 		return FAILED;
 	}
 
-	printf("requesting match from https://localhost:8080\n");
+	Godot::print("requesting match from https://localhost:8080");
 
-	matcher.RequestMatch(ProtocolId, clientId, false);
+	matcher->RequestMatch(ProtocolId, clientId, false);
 
-	if (matcher.GetMatchStatus() == MATCH_FAILED) {
-		// printf( "\nRequest match failed. Is the matcher running? Please run \"premake5 matcher\" before you connect a secure client\n" );
-		return 1;
+	if (matcher->GetMatchStatus() == MATCH_FAILED) {
+		Godot::print("\nRequest match failed. Is the matcher running? Please run \"premake5 matcher\" before you connect a secure client");
+		return FAILED;
 	}
 
 	uint8_t connectToken[ConnectTokenBytes];
-	matcher.GetConnectToken(connectToken);
+	matcher->GetConnectToken(connectToken);
 
-	// printf( "received connect token from matcher\n" );
+	Godot::print("received connect token from matcher\n");
 
 	double time = OS::get_ticks_msec();
 
 	ClientServerConfig config;
 	config.protocolId = ProtocolId;
 
-	Client client(GetDefaultAllocator(), Address("0.0.0.0"), config, adapter, time);
+	client = new yojimbo::Client(yojimbo::GetDefaultAllocator(), yojimbo::Address("0.0.0.0"), config, adapter, time);
 
 	Address serverAddress("127.0.0.1", port);
 
-	client.Connect(clientId, connectToken);
+	client->Connect(clientId, connectToken);
 
-	if (client.IsDisconnected()) {
+	if (client->IsDisconnected()) {
 		return FAILED;
 	}
 
 	char addressString[256];
-	client.GetAddress().ToString(addressString, sizeof(addressString));
-	printf("client address is %s\n", addressString);
+	client->GetAddress().ToString(addressString, sizeof(addressString));
+	Godot::print(String("client address is ") + String(addressString));
 
 	// signal( SIGINT, interrupt_handler );
 
-	// Poll
-	client.SendPackets();
-	client.ReceivePackets();
-	if (client.IsDisconnected()) {
-		return FAILED;
-	}
-
-	client.AdvanceTime(OS::get_ticks_msec());
-
-	if (client.ConnectionFailed()) {
-		return FAILED;
-	}
-	// End poll
-	client.Disconnect();
 	return OK;
 }
 
@@ -159,7 +167,7 @@ int NetworkedMultiplayerYojimbo::create_server(int port, int max_clients, int in
 
 	double time = OS::get_ticks_msec();
 
-	config.protocolId = ProtocolId;
+	config.protocolId = 0;
 
 	uint8_t privateKey[yojimbo::KeyBytes] = { 0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea,
 		0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4,
@@ -190,12 +198,17 @@ int NetworkedMultiplayerYojimbo::get_unique_id() const {
 }
 
 void NetworkedMultiplayerYojimbo::poll() {
-	if (!server->IsRunning()) {
-		return;
+	if (server != nullptr) {
+		server->SendPackets();
+		server->ReceivePackets();
+		server->AdvanceTime(OS::get_ticks_msec());
 	}
-	server->SendPackets();
-	server->ReceivePackets();
-	server->AdvanceTime(OS::get_ticks_msec());
+
+	if (client != nullptr) {
+		client->SendPackets();
+		client->ReceivePackets();
+		client->AdvanceTime(OS::get_ticks_msec());
+	}
 }
 
 void NetworkedMultiplayerYojimbo::set_target_peer(int id) {
