@@ -77,22 +77,32 @@ void NetworkedMultiplayerYojimbo::set_log_level(int level) {
 }
 
 void NetworkedMultiplayerYojimbo::close_connection() {
-	if (server) {
+
+	if (server != nullptr) {
 		server->Stop();
 	}
-	if (server != nullptr) {
-		delete server;
-		server = nullptr;
-	}
-	if (client) {
+
+	if (client != nullptr) {
 		client->Disconnect();
 	}
+
 	if (server != nullptr) {
+		delete server;
+	}
+	if (client != nullptr) {
 		delete client;
-		client = nullptr;
 	}
 
-	ShutdownYojimbo();
+	if (matcher != nullptr) {
+		delete matcher;
+	}
+
+	if (server != nullptr || client != nullptr || matcher != nullptr) {
+		ShutdownYojimbo();
+		server = nullptr;
+		client = nullptr;
+		matcher = nullptr;
+	}
 }
 
 int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandwidth, int out_bandwidth) {
@@ -153,8 +163,6 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 	client->GetAddress().ToString(addressString, sizeof(addressString));
 	Godot::print(String("client address is ") + String(addressString));
 
-	// signal( SIGINT, interrupt_handler );
-
 	return OK;
 }
 
@@ -167,14 +175,14 @@ int NetworkedMultiplayerYojimbo::create_server(int port, int max_clients, int in
 		return FAILED;
 	}
 
-	double time = OS::get_ticks_msec();
-
 	config.protocolId = ProtocolId;
 
 	uint8_t privateKey[yojimbo::KeyBytes] = { 0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea,
 		0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4,
 		0x43, 0x71, 0xd6, 0x2c, 0xd1, 0x99, 0x27, 0x26,
 		0x6b, 0x3c, 0x60, 0xf4, 0xb7, 0x15, 0xab, 0xa1 };
+
+	double time = OS::get_ticks_msec();
 
 	server = new yojimbo::Server(yojimbo::GetDefaultAllocator(), privateKey, yojimbo::Address("127.0.0.1", port), config, adapter, time);
 

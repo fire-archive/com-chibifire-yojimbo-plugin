@@ -14,4 +14,4 @@ func _physics_process(delta):
 	yojimbo.poll()
 
 func _on_Button_pressed():
-	pass
+	yojimbo.close_connection()
