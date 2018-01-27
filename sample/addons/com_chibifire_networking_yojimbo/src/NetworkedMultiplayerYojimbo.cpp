@@ -59,10 +59,7 @@ extern "C" void godot_nativescript_init(void *handle) {
 }
 
 Error NetworkedMultiplayerYojimbo::initialize_yojimbo() {
-	if (server != nullptr) {
-		return OK;
-	}
-	if (client != nullptr) {
+	if (client != nullptr || server != nullptr) {
 		return OK;
 	}
 
@@ -81,12 +78,14 @@ void NetworkedMultiplayerYojimbo::close_connection() {
 	}
 	if (server != nullptr) {
 		delete server;
+		server = nullptr;
 	}
 	if (client) {
 		client->Disconnect();
 	}
 	if (server != nullptr) {
 		delete client;
+		client = nullptr;
 	}
 
 	ShutdownYojimbo();
@@ -167,7 +166,7 @@ int NetworkedMultiplayerYojimbo::create_server(int port, int max_clients, int in
 
 	double time = OS::get_ticks_msec();
 
-	config.protocolId = 0;
+	config.protocolId = ProtocolId;
 
 	uint8_t privateKey[yojimbo::KeyBytes] = { 0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea,
 		0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4,
