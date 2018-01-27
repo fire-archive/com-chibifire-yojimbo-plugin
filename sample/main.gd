@@ -14,3 +14,4 @@ func _physics_process(delta):
 
 func _on_Button_pressed():
 	yojimbo.create_client("127.0.0.1", 40000, 0, 0)
+	yojimbo.set_log_level(2)

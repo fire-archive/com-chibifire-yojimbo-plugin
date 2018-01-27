@@ -68,8 +68,12 @@ Error NetworkedMultiplayerYojimbo::initialize_yojimbo() {
 		return FAILED;
 	}
 
-	yojimbo_log_level(YOJIMBO_LOG_LEVEL_DEBUG);
+	yojimbo_log_level(YOJIMBO_LOG_LEVEL_ERROR);
 	return OK;
+}
+
+void NetworkedMultiplayerYojimbo::set_log_level(int level) {
+	yojimbo_log_level(level);
 }
 
 void NetworkedMultiplayerYojimbo::close_connection() {
@@ -253,6 +257,9 @@ void NetworkedMultiplayerYojimbo::_register_methods() {
 	register_method("get_var", &NetworkedMultiplayerYojimbo::get_var);
 	register_method("put_packet", &NetworkedMultiplayerYojimbo::put_packet);
 	register_method("put_var", &NetworkedMultiplayerYojimbo::put_var);
+
+	// Custom
+	register_method("set_log_level", &NetworkedMultiplayerYojimbo::set_log_level);
 
 	register_signal<NetworkedMultiplayerYojimbo>("connection_failed");
 	register_signal<NetworkedMultiplayerYojimbo>("connection_succeeded");

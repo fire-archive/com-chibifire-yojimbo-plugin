@@ -46,7 +46,10 @@ private:
 	yojimbo::Matcher *matcher;
 
 public:
-	NetworkedMultiplayerYojimbo() : server(nullptr), client(nullptr), matcher(nullptr) {
+	NetworkedMultiplayerYojimbo() :
+			server(nullptr),
+			client(nullptr),
+			matcher(nullptr) {
 	}
 	~NetworkedMultiplayerYojimbo() {
 	}
@@ -68,6 +71,9 @@ public:
 	Variant get_var();
 	int put_packet(PoolByteArray buffer);
 	int put_var(Variant var);
+
+	// Custom
+	void set_log_level(int level);
 
 	static void _register_methods();
 };
