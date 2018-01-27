@@ -105,7 +105,6 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 	Godot::print("connecting client (secure)");
 
 	uint64_t clientId = 0;
-	uint64_t ProtocolId = 0;
 	random_bytes((uint8_t *)&clientId, 8);
 
 	char buffer[100];

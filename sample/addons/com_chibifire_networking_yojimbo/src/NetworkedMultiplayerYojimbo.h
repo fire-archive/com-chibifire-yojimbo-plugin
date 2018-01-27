@@ -46,7 +46,7 @@ private:
 	yojimbo::Matcher *matcher;
 
 public:
-	NetworkedMultiplayerYojimbo() {
+	NetworkedMultiplayerYojimbo() : server(nullptr), client(nullptr), matcher(nullptr) {
 	}
 	~NetworkedMultiplayerYojimbo() {
 	}
