@@ -257,13 +257,12 @@ int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
 	//	return get_peer(1)->put_packet(&(buffer.read()[0]), buffer.size());
 	//}
 
-	if(!client->CanSendMessage(RELIABLE_ORDERED_CHANNEL)) {
+	if (!client->CanSendMessage(RELIABLE_ORDERED_CHANNEL)) {
 		return FAILED;
 	}
 
-	TestMessage * message = (TestMessage*)client->CreateMessage(TEST_MESSAGE);
-	if (message)
-	{
+	TestMessage *message = (TestMessage *)client->CreateMessage(TEST_MESSAGE);
+	if (message) {
 		message->sequence = (uint16_t)numMessagesSentToServer;
 		client->SendMessage(RELIABLE_ORDERED_CHANNEL, message);
 		numMessagesSentToServer++;
