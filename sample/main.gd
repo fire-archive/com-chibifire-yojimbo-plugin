@@ -14,4 +14,5 @@ func _physics_process(delta):
 	yojimbo.poll()
 
 func _on_Button_pressed():
+	yojimbo.put_packet(PoolByteArray());
 	yojimbo.close_connection()

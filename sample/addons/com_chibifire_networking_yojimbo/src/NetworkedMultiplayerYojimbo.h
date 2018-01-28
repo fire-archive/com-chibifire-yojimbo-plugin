@@ -44,12 +44,22 @@ private:
 	yojimbo::Server *server;
 	yojimbo::Client *client;
 	yojimbo::Matcher *matcher;
+	const int messagesToSend;
+	uint64_t numMessagesSentToServer = 0;
+	uint64_t numMessagesSentToClient = 0;
+	uint64_t numMessagesReceivedFromClient = 0;
+	uint64_t numMessagesReceivedFromServer = 0;
 
 public:
 	NetworkedMultiplayerYojimbo() :
 			server(nullptr),
 			client(nullptr),
-			matcher(nullptr) {
+			matcher(nullptr),
+			messagesToSend(8),
+			numMessagesSentToServer(0),
+			numMessagesSentToClient(0),
+			numMessagesReceivedFromClient(0),
+			numMessagesReceivedFromServer(0) {
 	}
 	~NetworkedMultiplayerYojimbo() {
 	}

@@ -45,6 +45,9 @@ using namespace yojimbo;
 using godot::Directory;
 using godot::Ref;
 
+static const int UNRELIABLE_UNORDERED_CHANNEL = 0;
+static const int RELIABLE_ORDERED_CHANNEL = 1;
+
 extern "C" void godot_gdnative_init(godot_gdnative_init_options *options) {
 	Godot::gdnative_init(options);
 }
@@ -67,6 +70,11 @@ Error NetworkedMultiplayerYojimbo::initialize_yojimbo() {
 		Godot::print("error: failed to initialize Yojimbo!");
 		return FAILED;
 	}
+
+	config.numChannels = 2;
+	config.channel[UNRELIABLE_UNORDERED_CHANNEL].type = CHANNEL_TYPE_UNRELIABLE_UNORDERED;
+	config.channel[RELIABLE_ORDERED_CHANNEL].type = CHANNEL_TYPE_RELIABLE_ORDERED;
+	config.channel[RELIABLE_ORDERED_CHANNEL].blockFragmentSize = 1024;
 
 	yojimbo_log_level(YOJIMBO_LOG_LEVEL_ERROR);
 	return OK;
@@ -146,7 +154,6 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 
 	double time = OS::get_ticks_msec();
 
-	ClientServerConfig config;
 	config.protocolId = ProtocolId;
 
 	client = new yojimbo::Client(yojimbo::GetDefaultAllocator(), yojimbo::Address("0.0.0.0"), config, adapter, time);
@@ -241,7 +248,28 @@ Variant NetworkedMultiplayerYojimbo::get_var() {
 }
 
 int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
-	return OK;
+	//PoolVector<uint8_t> buffer = _make_pkt(SYS_NONE, get_unique_id(), _target_peer, p_buffer, p_buffer_size);
+
+	//if (is_server()) {
+	//	return _server_relay(1, _target_peer, &(buffer.read()[0]), buffer.size());
+	//}
+	//else {
+	//	return get_peer(1)->put_packet(&(buffer.read()[0]), buffer.size());
+	//}
+
+	if(!client->CanSendMessage(RELIABLE_ORDERED_CHANNEL)) {
+		return FAILED;
+	}
+
+	TestMessage * message = (TestMessage*)client->CreateMessage(TEST_MESSAGE);
+	if (message)
+	{
+		message->sequence = (uint16_t)numMessagesSentToServer;
+		client->SendMessage(RELIABLE_ORDERED_CHANNEL, message);
+		numMessagesSentToServer++;
+		return OK;
+	}
+	return FAILED;
 }
 
 int NetworkedMultiplayerYojimbo::put_var(Variant var) {
