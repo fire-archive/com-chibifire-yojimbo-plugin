@@ -1,7 +1,7 @@
-cc_library(
+cc_binary(
     name = "com_chibifire_networking_yojimbo",
     srcs = [
-        "thirdparty/cpp_bindings/bin/godot_cpp_bindings.a",
+        "thirdparty/cpp_bindings/bin/cpp_bindings.linux.64.a",
     ],
     copts = [
         "-O2",
@@ -13,6 +13,19 @@ cc_library(
         "thirdparty/godot/modules/gdnative/include",
     ],
     linkstatic = 1,
+    deps = ["networking_yojimbo"],
+)
+
+cc_binary(
+    features = ["use_linker", "windows_export_all_symbols"],
+    name = "com_chibifire_networking_yojimbo.dll",
+	srcs = [
+        "thirdparty/cpp_bindings/bin/cpp_bindings.windows.64.lib",
+    ],
+    linkstatic = 1,
+    linkshared = 1,
+    copts = ["-O2", "/MD"],
+    linkopts = ["-NODEFAULTLIB:LIBCMT"],
     deps = ["networking_yojimbo"],
 )
 

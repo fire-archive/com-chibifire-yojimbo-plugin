@@ -1,0 +1,1 @@
+thirdparty\godot\bin\godot.windows.tools.64.exe --path sample -e
