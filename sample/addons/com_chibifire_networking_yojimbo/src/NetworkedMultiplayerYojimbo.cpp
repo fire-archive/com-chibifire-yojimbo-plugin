@@ -257,17 +257,17 @@ int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
 	//	return get_peer(1)->put_packet(&(buffer.read()[0]), buffer.size());
 	//}
 
-	if (!client->CanSendMessage(RELIABLE_ORDERED_CHANNEL)) {
-		return FAILED;
-	}
+	//if (!client->CanSendMessage(RELIABLE_ORDERED_CHANNEL)) {
+	//	return FAILED;
+	//}
 
-	TestMessage *message = (TestMessage *)client->CreateMessage(TEST_MESSAGE);
-	if (message) {
-		message->sequence = (uint16_t)numMessagesSentToServer;
-		client->SendMessage(RELIABLE_ORDERED_CHANNEL, message);
-		numMessagesSentToServer++;
-		return OK;
-	}
+	//TestMessage *message = (TestMessage *)client->CreateMessage(TEST_MESSAGE);
+	//if (message) {
+	//	message->sequence = (uint16_t)numMessagesSentToServer;
+	//	client->SendMessage(RELIABLE_ORDERED_CHANNEL, message);
+	//	numMessagesSentToServer++;
+	//	return OK;
+	//}
 	return FAILED;
 }
 
@@ -296,8 +296,9 @@ void NetworkedMultiplayerYojimbo::_register_methods() {
 	// Custom
 	register_method("set_log_level", &NetworkedMultiplayerYojimbo::set_log_level);
 
-	register_signal<NetworkedMultiplayerYojimbo>("connection_failed");
-	register_signal<NetworkedMultiplayerYojimbo>("connection_succeeded");
-	register_signal<NetworkedMultiplayerYojimbo>("peer_connected");
-	register_signal<NetworkedMultiplayerYojimbo>("server_disconnected");
+	//register_signal<NetworkedMultiplayerYojimbo>("connection_failed");
+	//register_signal<NetworkedMultiplayerYojimbo>("connection_succeeded");
+	//register_signal<NetworkedMultiplayerYojimbo>("server_disconnected");
+	//register_signal<NetworkedMultiplayerYojimbo>("peer_connected");
+	//register_signal<NetworkedMultiplayerYojimbo>("server_disconnected");
 }
