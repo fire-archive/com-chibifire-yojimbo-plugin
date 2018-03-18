@@ -76,7 +76,7 @@ Error NetworkedMultiplayerYojimbo::initialize_yojimbo() {
 	config.channel[RELIABLE_ORDERED_CHANNEL].type = CHANNEL_TYPE_RELIABLE_ORDERED;
 	config.channel[RELIABLE_ORDERED_CHANNEL].blockFragmentSize = 1024;
 
-	yojimbo_log_level(YOJIMBO_LOG_LEVEL_ERROR);
+	yojimbo_log_level(YOJIMBO_LOG_LEVEL_DEBUG);
 	return OK;
 }
 
