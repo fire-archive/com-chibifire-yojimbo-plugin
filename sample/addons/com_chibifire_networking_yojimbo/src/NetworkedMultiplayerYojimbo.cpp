@@ -251,29 +251,25 @@ PoolByteArray NetworkedMultiplayerYojimbo::get_packet() {
 	if (get_connection_status() != 0) {
 		return PoolByteArray();
 	}
-
-	Message * message = server->ReceiveMessage(client->GetClientIndex(), RELIABLE_ORDERED_CHANNEL);
+	Message *message = server->ReceiveMessage(client->GetClientIndex(), RELIABLE_ORDERED_CHANNEL);
 	if (!message) {
 		return PoolByteArray();
 	}
-
-	if (message->GetType() != TEST_BLOCK_MESSAGE)
-	{
+	if (message->GetType() != TEST_BLOCK_MESSAGE) {
 		return PoolByteArray();
 	}
-
-	TestBlockMessage * block_message = (TestBlockMessage*)message;
+	TestBlockMessage *block_message = (TestBlockMessage *)message;
 	yojimbo_assert(block_message->sequence == uint16_t(numMessagesReceivedFromClient));
 	char buffer[1024];
 	snprintf(buffer, 1024, "server received message %d\n", block_message->sequence);
 	Godot::print(buffer);
-//	server->ReleaseMessage(clientIndex, message);
 	numMessagesReceivedFromClient++;
 	PoolByteArray block;
 	uint8_t *block_data = block_message->GetBlockData();
 	for (size_t i = 0; i < block_message->GetBlockSize(); i++) {
 		block.append(block_data[i]);
 	}
+	server->ReleaseMessage(client->GetClientIndex(), message);
 	return block;
 }
 
@@ -294,18 +290,16 @@ int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
 	}
 	if (!client->CanSendMessage(RELIABLE_ORDERED_CHANNEL)) {
 		return FAILED;
-	}	
-	TestBlockMessage * message = (TestBlockMessage*)client->CreateMessage(TEST_BLOCK_MESSAGE);
-	if (message)
-	{
+	}
+	TestBlockMessage *message = (TestBlockMessage *)client->CreateMessage(TEST_BLOCK_MESSAGE);
+	if (message) {
 		message->sequence = (uint16_t)numMessagesSentToServer;
 		const int32_t block_size = 1 + (int32_t(numMessagesSentToServer)) % MaxBlockSize;
-		uint8_t * block_data = client->AllocateBlock(block_size);
-		if (!block_data)
-		{
-			//client->ReleaseMessage(message);
+		uint8_t *block_data = client->AllocateBlock(block_size);
+		if (!block_data) {
+			client->ReleaseMessage(message);
+			return FAILED;
 		}
-
 		for (int j = 0; j < block_size; ++j) {
 			block_data[j] = uint8_t(numMessagesSentToServer + j);
 		}
@@ -315,7 +309,6 @@ int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
 		Godot::print("Sent packet");
 		return OK;
 	}
-
 	return FAILED;
 
 	// Switch between reliable, unreliable, and unrealiable (unsequenced)
