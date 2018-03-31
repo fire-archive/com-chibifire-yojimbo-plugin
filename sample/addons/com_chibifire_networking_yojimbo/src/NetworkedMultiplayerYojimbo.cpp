@@ -25,7 +25,6 @@
 #include <Reference.hpp>
 #include <Godot.hpp>
 
-#include "NetworkedMultiplayerYojimbo.h"
 #include <Animation.hpp>
 #include <Directory.hpp>
 #include <NetworkedMultiplayerPeer.hpp>
@@ -130,7 +129,7 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 
 	Godot::print("connecting client (secure)");
 
-	client_id = _gen_unique_id();
+	client_id = gen_unique_id_();
 
 	char buffer[100];
 	snprintf(buffer, 100, "client id is %.16" PRIx64, client_id);
@@ -146,14 +145,14 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 	matcher->RequestMatch(ProtocolId, client_id, false);
 
 	if (matcher->GetMatchStatus() == MATCH_FAILED) {
-		Godot::print("\nRequest match failed. Is the matcher running? Please run matcher before you connect a secure client");
+		Godot::print("Request match failed. Is the matcher running? Please run matcher before you connect a secure client");
 		return FAILED;
 	}
 
 	uint8_t connectToken[ConnectTokenBytes];
 	matcher->GetConnectToken(connectToken);
 
-	Godot::print("received connect token from matcher\n");
+	Godot::print("received connect token from matcher");
 
 	double time = OS::get_ticks_msec();
 
@@ -232,11 +231,57 @@ void NetworkedMultiplayerYojimbo::poll() {
 		server->ReceivePackets();
 		server->AdvanceTime(OS::get_ticks_msec());
 	}
-
 	if (client != nullptr) {
 		client->SendPackets();
 		client->ReceivePackets();
 		client->AdvanceTime(OS::get_ticks_msec());
+	}
+
+	if (server != nullptr) {
+		if (!server) {
+			return;
+		}
+		if (!client) {
+			return;
+		}
+		if (server->GetNumConnectedClients() == 0) {
+			return;
+		}
+
+		Message *message = server->ReceiveMessage(client->GetClientIndex(), RELIABLE_ORDERED_CHANNEL);
+		if (!message) {
+			return;
+		}
+		yojimbo_assert(message->GetId() == (uint16_t)numMessagesReceivedFromClient);
+		switch (message->GetType()) {
+			case TEST_BLOCK_MESSAGE: {
+				TestBlockMessage *blockMessage = (TestBlockMessage *)message;
+				yojimbo_assert(blockMessage->sequence == uint16_t(numMessagesReceivedFromClient));
+				const int blockSize = blockMessage->GetBlockSize();
+				const int expectedBlockSize = 1 + (int(numMessagesReceivedFromClient)) % MaxBlockSize;
+				if (blockSize != expectedBlockSize) {
+					printf("error: block size mismatch. expected %d, got %d\n", expectedBlockSize, blockSize);
+					return;
+				}
+				const uint8_t *blockData = blockMessage->GetBlockData();
+				yojimbo_assert(blockData);
+				for (int i = 0; i < blockSize; ++i) {
+					if (blockData[i] != uint8_t(numMessagesReceivedFromClient + i)) {
+						printf("error: block data mismatch. expected %d, but blockData[%d] = %d\n", uint8_t(numMessagesReceivedFromClient + i), i, blockData[i]);
+						return;
+					}
+				}
+				printf("server received message %d\n", uint16_t(numMessagesReceivedFromClient));
+				PoolByteArray block;
+				for (size_t i = 0; i < blockMessage->GetBlockSize(); i++) {
+					block.append(blockData[i]);
+				}
+				server->ReleaseMessage(client->GetClientIndex(), message);
+				numMessagesReceivedFromClient++;
+				server_put_packet_(block);
+				break;
+			}
+		}
 	}
 }
 
@@ -248,28 +293,41 @@ int NetworkedMultiplayerYojimbo::get_available_packet_count() const {
 }
 
 PoolByteArray NetworkedMultiplayerYojimbo::get_packet() {
-	if (get_connection_status() != 0) {
+	if (!client->IsConnected()) {
 		return PoolByteArray();
 	}
-	Message *message = server->ReceiveMessage(client->GetClientIndex(), RELIABLE_ORDERED_CHANNEL);
+	Message *message = client->ReceiveMessage(RELIABLE_ORDERED_CHANNEL);
 	if (!message) {
 		return PoolByteArray();
 	}
+	yojimbo_assert(message->GetId() == (uint16_t)numMessagesReceivedFromServer);
+
 	if (message->GetType() != TEST_BLOCK_MESSAGE) {
 		return PoolByteArray();
 	}
-	TestBlockMessage *block_message = (TestBlockMessage *)message;
-	yojimbo_assert(block_message->sequence == uint16_t(numMessagesReceivedFromClient));
-	char buffer[1024];
-	snprintf(buffer, 1024, "server received message %d\n", block_message->sequence);
-	Godot::print(buffer);
-	numMessagesReceivedFromClient++;
-	PoolByteArray block;
-	uint8_t *block_data = block_message->GetBlockData();
-	for (size_t i = 0; i < block_message->GetBlockSize(); i++) {
-		block.append(block_data[i]);
+	TestBlockMessage *blockMessage = (TestBlockMessage *)message;
+	yojimbo_assert(blockMessage->sequence == uint16_t(numMessagesReceivedFromServer));
+	const int blockSize = blockMessage->GetBlockSize();
+	const int expectedBlockSize = 1 + (int(numMessagesReceivedFromServer)) % MaxBlockSize;
+	if (blockSize != expectedBlockSize) {
+		printf("error: block size mismatch. expected %d, got %d\n", expectedBlockSize, blockSize);
+		return PoolByteArray();
 	}
-	server->ReleaseMessage(client->GetClientIndex(), message);
+	const uint8_t *blockData = blockMessage->GetBlockData();
+	yojimbo_assert(blockData);
+	for (int i = 0; i < blockSize; ++i) {
+		if (blockData[i] != uint8_t(numMessagesReceivedFromServer + i)) {
+			printf("error: block data mismatch. expected %d, but blockData[%d] = %d\n", uint8_t(numMessagesReceivedFromServer + i), i, blockData[i]);
+			return PoolByteArray();
+		}
+	}
+	PoolByteArray block;
+	for (size_t i = 0; i < blockMessage->GetBlockSize(); i++) {
+		block.append(blockData[i]);
+	}
+	printf("client received message %d\n", uint16_t(numMessagesReceivedFromServer));
+	client->ReleaseMessage(message);
+	numMessagesReceivedFromServer++;
 	return block;
 }
 
@@ -278,10 +336,12 @@ int NetworkedMultiplayerYojimbo::get_packet_error() const {
 }
 
 Variant NetworkedMultiplayerYojimbo::get_var() {
-	return Variant();
+	const String base64 = Marshalls::raw_to_base64(get_packet());
+	const Variant variant = Marshalls::base64_to_variant(base64);
+	return variant;
 }
 
-int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
+int32_t NetworkedMultiplayerYojimbo::client_put_packet_(PoolByteArray buffer) {
 	if (!client) {
 		return FAILED;
 	}
@@ -306,11 +366,45 @@ int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
 		client->AttachBlockToMessage(message, block_data, block_size);
 		client->SendMessage(RELIABLE_ORDERED_CHANNEL, message);
 		numMessagesSentToServer++;
-		Godot::print("Sent packet");
+		Godot::print("Sent packet from client");
 		return OK;
 	}
 	return FAILED;
+}
 
+int32_t NetworkedMultiplayerYojimbo::server_put_packet_(PoolByteArray buffer) {
+	if (!client) {
+		return FAILED;
+	}
+	if (!server) {
+		return FAILED;
+	}
+	if (!server->IsClientConnected(client->GetClientIndex())) {
+		return FAILED;
+	}
+	TestBlockMessage *message = (TestBlockMessage *)server->CreateMessage(client->GetClientIndex(), TEST_BLOCK_MESSAGE);
+	if (message) {
+		message->sequence = (uint16_t)numMessagesSentToClient;
+		const int32_t block_size = 1 + (int32_t(numMessagesSentToClient)) % MaxBlockSize;
+		uint8_t *block_data = server->AllocateBlock(client->GetClientIndex(), block_size);
+		if (!block_data) {
+			server->ReleaseMessage(client->GetClientIndex(), message);
+			return FAILED;
+		}
+		for (int j = 0; j < block_size; ++j) {
+			block_data[j] = uint8_t(numMessagesSentToClient + j);
+		}
+		server->AttachBlockToMessage(client->GetClientIndex(), message, block_data, block_size);
+		server->SendMessage(client->GetClientIndex(), RELIABLE_ORDERED_CHANNEL, message);
+		numMessagesSentToClient++;
+		Godot::print("Sent packet from server");
+		return OK;
+	}
+	return FAILED;
+}
+
+int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
+	return client_put_packet_(buffer);
 	// Switch between reliable, unreliable, and unrealiable (unsequenced)
 
 	// Send packet
@@ -318,7 +412,7 @@ int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
 }
 
 // From NetworkedMultiplayerENet::_gen_unique_id()
-uint32_t NetworkedMultiplayerYojimbo::_gen_unique_id() const {
+uint32_t NetworkedMultiplayerYojimbo::gen_unique_id_() const {
 
 	uint32_t hash = 0;
 
@@ -345,14 +439,14 @@ uint32_t NetworkedMultiplayerYojimbo::_gen_unique_id() const {
 	return hash;
 }
 
-int NetworkedMultiplayerYojimbo::put_var(Variant var) {
-	return OK;
+int NetworkedMultiplayerYojimbo::put_var(const Variant var) {
+	PoolByteArray raw = Marshalls::base64_to_raw(Marshalls::variant_to_base64(var));
+	return put_packet(raw);
 }
 
 void NetworkedMultiplayerYojimbo::_register_methods() {
 	register_method("close_connection", &NetworkedMultiplayerYojimbo::close_connection);
 	register_method("create_client", &NetworkedMultiplayerYojimbo::create_client);
-	register_method("create_client_yojimbo", &NetworkedMultiplayerYojimbo::create_client);
 	register_method("create_server", &NetworkedMultiplayerYojimbo::create_server);
 	register_method("set_bind_ip", &NetworkedMultiplayerYojimbo::set_bind_ip);
 	register_method("get_connection_status", &NetworkedMultiplayerYojimbo::get_connection_status);

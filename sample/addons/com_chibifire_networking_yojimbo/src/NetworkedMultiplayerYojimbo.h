@@ -33,6 +33,7 @@
 #include <String.hpp>
 #include <core/Godot.hpp>
 #include <core/GodotGlobal.hpp>
+#include <Marshalls.hpp>
 
 using namespace godot;
 
@@ -49,8 +50,11 @@ private:
 	uint64_t numMessagesSentToClient = 0;
 	uint64_t numMessagesReceivedFromClient = 0;
 	uint64_t numMessagesReceivedFromServer = 0;
-	uint32_t _gen_unique_id() const;
+
 	uint64_t client_id = 0;
+	uint32_t gen_unique_id_() const;
+	int32_t client_put_packet_(PoolByteArray buffer);
+	int32_t server_put_packet_(PoolByteArray buffer);
 
 public:
 	NetworkedMultiplayerYojimbo() :
