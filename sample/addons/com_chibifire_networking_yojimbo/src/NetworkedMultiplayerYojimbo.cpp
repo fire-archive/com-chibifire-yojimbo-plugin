@@ -146,7 +146,7 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 	matcher->RequestMatch(ProtocolId, client_id, false);
 
 	if (matcher->GetMatchStatus() == MATCH_FAILED) {
-		Godot::print("\nRequest match failed. Is the matcher running? Please run \"premake5 matcher\" before you connect a secure client");
+		Godot::print("\nRequest match failed. Is the matcher running? Please run matcher before you connect a secure client");
 		return FAILED;
 	}
 
@@ -269,8 +269,12 @@ PoolByteArray NetworkedMultiplayerYojimbo::get_packet() {
 	Godot::print(buffer);
 //	server->ReleaseMessage(clientIndex, message);
 	numMessagesReceivedFromClient++;
-
-	return PoolByteArray();
+	PoolByteArray block;
+	uint8_t *block_data = block_message->GetBlockData();
+	for (size_t i = 0; i < block_message->GetBlockSize(); i++) {
+		block.append(block_data[i]);
+	}
+	return block;
 }
 
 int NetworkedMultiplayerYojimbo::get_packet_error() const {
@@ -295,7 +299,7 @@ int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
 	if (message)
 	{
 		message->sequence = (uint16_t)numMessagesSentToServer;
-		const int32_t block_size = 1 + (int32_t(numMessagesSentToServer) * 33) % MaxBlockSize;
+		const int32_t block_size = 1 + (int32_t(numMessagesSentToServer)) % MaxBlockSize;
 		uint8_t * block_data = client->AllocateBlock(block_size);
 		if (!block_data)
 		{
