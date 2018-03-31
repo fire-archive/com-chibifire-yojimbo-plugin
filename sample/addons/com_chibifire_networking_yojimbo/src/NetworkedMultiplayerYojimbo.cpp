@@ -24,7 +24,6 @@
 // clang-format off
 #include <Reference.hpp>
 #include <Godot.hpp>
-#include <OS.hpp>
 
 #include "NetworkedMultiplayerYojimbo.h"
 #include <Animation.hpp>
@@ -34,8 +33,10 @@
 #include <ProjectSettings.hpp>
 #include <Ref.hpp>
 #include <Vector3.hpp>
+#include <OS.hpp>
 #include "thirdparty/yojimbo/yojimbo.h"
 #include "thirdparty/yojimbo/shared.h"
+#include "NetworkedMultiplayerYojimbo.h"
 // clang-format on
 
 bool verboseOutput = false;
@@ -47,6 +48,9 @@ using godot::Ref;
 
 static const int UNRELIABLE_UNORDERED_CHANNEL = 0;
 static const int RELIABLE_ORDERED_CHANNEL = 1;
+const int MaxPacketSize = 16 * 1024;
+const int MaxSnapshotSize = 8 * 1024;
+const int MaxBlockSize = 64 * 1024;
 
 extern "C" void godot_gdnative_init(godot_gdnative_init_options *options) {
 	Godot::gdnative_init(options);
@@ -126,11 +130,10 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 
 	Godot::print("connecting client (secure)");
 
-	uint64_t clientId = 0;
-	random_bytes((uint8_t *)&clientId, 8);
+	client_id = _gen_unique_id();
 
 	char buffer[100];
-	snprintf(buffer, 100, "client id is %.16" PRIx64, clientId);
+	snprintf(buffer, 100, "client id is %.16" PRIx64, client_id);
 	Godot::print(buffer);
 
 	if (!matcher->Initialize()) {
@@ -140,7 +143,7 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 
 	Godot::print("requesting match from https://localhost:8080");
 
-	matcher->RequestMatch(ProtocolId, clientId, false);
+	matcher->RequestMatch(ProtocolId, client_id, false);
 
 	if (matcher->GetMatchStatus() == MATCH_FAILED) {
 		Godot::print("\nRequest match failed. Is the matcher running? Please run \"premake5 matcher\" before you connect a secure client");
@@ -160,7 +163,7 @@ int NetworkedMultiplayerYojimbo::create_client(String ip, int port, int in_bandw
 
 	Address serverAddress("127.0.0.1", port);
 
-	client->Connect(clientId, connectToken);
+	client->Connect(client_id, connectToken);
 
 	if (client->IsDisconnected()) {
 		return FAILED;
@@ -203,7 +206,16 @@ void NetworkedMultiplayerYojimbo::set_bind_ip(String ip) {
 }
 
 int NetworkedMultiplayerYojimbo::get_connection_status() const {
-	return OK;
+	if (client == nullptr) {
+		return FAILED;
+	}
+	if (client->IsDisconnected()) {
+		return FAILED;
+	}
+	if (server->IsClientConnected(client->GetClientIndex())) {
+		return OK;
+	}
+	return FAILED;
 }
 
 int NetworkedMultiplayerYojimbo::get_packet_peer() const {
@@ -236,23 +248,24 @@ int NetworkedMultiplayerYojimbo::get_available_packet_count() const {
 }
 
 PoolByteArray NetworkedMultiplayerYojimbo::get_packet() {
-	// preconditions
-	// must have packets
-	int clientIndex = 0;
-	Message * message = server->ReceiveMessage(clientIndex, RELIABLE_ORDERED_CHANNEL);
+	if (get_connection_status() != 0) {
+		return PoolByteArray();
+	}
+
+	Message * message = server->ReceiveMessage(client->GetClientIndex(), RELIABLE_ORDERED_CHANNEL);
 	if (!message) {
 		return PoolByteArray();
 	}
 
-	if (message->GetType() != TEST_MESSAGE)
+	if (message->GetType() != TEST_BLOCK_MESSAGE)
 	{
 		return PoolByteArray();
 	}
 
-	TestMessage * testMessage = (TestMessage*)message;
-	yojimbo_assert(testMessage->sequence == uint16_t(numMessagesReceivedFromClient));
+	TestBlockMessage * block_message = (TestBlockMessage*)message;
+	yojimbo_assert(block_message->sequence == uint16_t(numMessagesReceivedFromClient));
 	char buffer[1024];
-	snprintf(buffer, 1024, "server received message %d\n", testMessage->sequence);
+	snprintf(buffer, 1024, "server received message %d\n", block_message->sequence);
 	Godot::print(buffer);
 //	server->ReleaseMessage(clientIndex, message);
 	numMessagesReceivedFromClient++;
@@ -269,17 +282,30 @@ Variant NetworkedMultiplayerYojimbo::get_var() {
 }
 
 int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
-	// Preconditions
-	// Connected
-
-	if (!client->CanSendMessage(RELIABLE_ORDERED_CHANNEL)) {
+	if (!client) {
 		return FAILED;
 	}
-	
-	TestMessage * message = (TestMessage*)client->CreateMessage(TEST_MESSAGE);
+	if (!client->IsConnected()) {
+		return FAILED;
+	}
+	if (!client->CanSendMessage(RELIABLE_ORDERED_CHANNEL)) {
+		return FAILED;
+	}	
+	TestBlockMessage * message = (TestBlockMessage*)client->CreateMessage(TEST_BLOCK_MESSAGE);
 	if (message)
 	{
 		message->sequence = (uint16_t)numMessagesSentToServer;
+		const int32_t block_size = 1 + (int32_t(numMessagesSentToServer) * 33) % MaxBlockSize;
+		uint8_t * block_data = client->AllocateBlock(block_size);
+		if (!block_data)
+		{
+			//client->ReleaseMessage(message);
+		}
+
+		for (int j = 0; j < block_size; ++j) {
+			block_data[j] = uint8_t(numMessagesSentToServer + j);
+		}
+		client->AttachBlockToMessage(message, block_data, block_size);
 		client->SendMessage(RELIABLE_ORDERED_CHANNEL, message);
 		numMessagesSentToServer++;
 		Godot::print("Sent packet");
@@ -292,6 +318,34 @@ int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
 
 	// Send packet
 	// return status
+}
+
+// From NetworkedMultiplayerENet::_gen_unique_id()
+uint32_t NetworkedMultiplayerYojimbo::_gen_unique_id() const {
+
+	uint32_t hash = 0;
+
+	while (hash == 0 || hash == 1) {
+		char buffer[1024];
+		snprintf(buffer, 1024, "%d|%lld", hash, OS::get_ticks_msec());
+		hash = String(buffer).to_int();
+		snprintf(buffer, 1024, "%d|%lld", hash, OS::get_unix_time());
+		hash = String(buffer).to_int();
+		snprintf(buffer, 1024, "%d|%d", hash, OS::get_user_data_dir().hash());
+		hash = String(buffer).to_int();
+		/*
+		hash = hash_djb2_one_32(
+		(uint32_t)OS::get_singleton()->get_unique_id().hash64(), hash );
+		*/
+		snprintf(buffer, 1024, "%d|%lld", hash, (uint64_t)this);
+		hash = String(buffer).to_int();
+		snprintf(buffer, 1024, "%d|%lld", hash, ((uint64_t)&hash));
+		hash = String(buffer).to_int();
+
+		hash = hash & 0x7FFFFFFF; // make it compatible with unsigned, since negative id is used for exclusion
+	}
+
+	return hash;
 }
 
 int NetworkedMultiplayerYojimbo::put_var(Variant var) {

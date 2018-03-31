@@ -49,6 +49,8 @@ private:
 	uint64_t numMessagesSentToClient = 0;
 	uint64_t numMessagesReceivedFromClient = 0;
 	uint64_t numMessagesReceivedFromServer = 0;
+	uint32_t _gen_unique_id() const;
+	uint64_t client_id = 0;
 
 public:
 	NetworkedMultiplayerYojimbo() :
@@ -65,22 +67,22 @@ public:
 	}
 
 	void close_connection();
-	int create_client(String ip, int port, int in_bandwidth = 0, int out_bandwidth = 0);
-	int create_server(int port, int max_clients = 32, int in_bandwidth = 0, int out_bandwidth = 0);
+	int32_t create_client(String ip, int port, int in_bandwidth = 0, int out_bandwidth = 0);
+	int32_t create_server(int port, int max_clients = 32, int in_bandwidth = 0, int out_bandwidth = 0);
 	void set_bind_ip(String ip);
 
-	int get_connection_status() const;
-	int get_packet_peer() const;
-	int get_unique_id() const;
+	int32_t get_connection_status() const;
+	int32_t get_packet_peer() const;
+	int32_t get_unique_id() const;
 	void poll();
 	void set_target_peer(int id);
 
-	int get_available_packet_count() const;
+	int32_t get_available_packet_count() const;
 	PoolByteArray get_packet();
-	int get_packet_error() const;
+	int32_t get_packet_error() const;
 	Variant get_var();
-	int put_packet(PoolByteArray buffer);
-	int put_var(Variant var);
+	int32_t put_packet(PoolByteArray buffer);
+	int32_t put_var(Variant var);
 
 	// Custom
 	void set_log_level(int level);
