@@ -23,4 +23,6 @@ func _physics_process(delta):
 	yojimbo.poll()
 
 func _on_Button_pressed():
-	yojimbo.close_connection()
+	yojimbo.put_packet([])
+	print(yojimbo.get_packet().size())
+#	yojimbo.close_connection()

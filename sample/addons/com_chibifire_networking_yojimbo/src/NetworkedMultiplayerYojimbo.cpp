@@ -76,7 +76,7 @@ Error NetworkedMultiplayerYojimbo::initialize_yojimbo() {
 	config.channel[RELIABLE_ORDERED_CHANNEL].type = CHANNEL_TYPE_RELIABLE_ORDERED;
 	config.channel[RELIABLE_ORDERED_CHANNEL].blockFragmentSize = 1024;
 
-	yojimbo_log_level(YOJIMBO_LOG_LEVEL_DEBUG);
+	yojimbo_log_level(YOJIMBO_LOG_LEVEL_INFO);
 	return OK;
 }
 
@@ -236,6 +236,27 @@ int NetworkedMultiplayerYojimbo::get_available_packet_count() const {
 }
 
 PoolByteArray NetworkedMultiplayerYojimbo::get_packet() {
+	// preconditions
+	// must have packets
+	int clientIndex = 0;
+	Message * message = server->ReceiveMessage(clientIndex, RELIABLE_ORDERED_CHANNEL);
+	if (!message) {
+		return PoolByteArray();
+	}
+
+	if (message->GetType() != TEST_MESSAGE)
+	{
+		return PoolByteArray();
+	}
+
+	TestMessage * testMessage = (TestMessage*)message;
+	yojimbo_assert(testMessage->sequence == uint16_t(numMessagesReceivedFromClient));
+	char buffer[1024];
+	snprintf(buffer, 1024, "server received message %d\n", testMessage->sequence);
+	Godot::print(buffer);
+//	server->ReleaseMessage(clientIndex, message);
+	numMessagesReceivedFromClient++;
+
 	return PoolByteArray();
 }
 
@@ -248,27 +269,29 @@ Variant NetworkedMultiplayerYojimbo::get_var() {
 }
 
 int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
-	//PoolVector<uint8_t> buffer = _make_pkt(SYS_NONE, get_unique_id(), _target_peer, p_buffer, p_buffer_size);
+	// Preconditions
+	// Connected
 
-	//if (is_server()) {
-	//	return _server_relay(1, _target_peer, &(buffer.read()[0]), buffer.size());
-	//}
-	//else {
-	//	return get_peer(1)->put_packet(&(buffer.read()[0]), buffer.size());
-	//}
+	if (!client->CanSendMessage(RELIABLE_ORDERED_CHANNEL)) {
+		return FAILED;
+	}
+	
+	TestMessage * message = (TestMessage*)client->CreateMessage(TEST_MESSAGE);
+	if (message)
+	{
+		message->sequence = (uint16_t)numMessagesSentToServer;
+		client->SendMessage(RELIABLE_ORDERED_CHANNEL, message);
+		numMessagesSentToServer++;
+		Godot::print("Sent packet");
+		return OK;
+	}
 
-	//if (!client->CanSendMessage(RELIABLE_ORDERED_CHANNEL)) {
-	//	return FAILED;
-	//}
-
-	//TestMessage *message = (TestMessage *)client->CreateMessage(TEST_MESSAGE);
-	//if (message) {
-	//	message->sequence = (uint16_t)numMessagesSentToServer;
-	//	client->SendMessage(RELIABLE_ORDERED_CHANNEL, message);
-	//	numMessagesSentToServer++;
-	//	return OK;
-	//}
 	return FAILED;
+
+	// Switch between reliable, unreliable, and unrealiable (unsequenced)
+
+	// Send packet
+	// return status
 }
 
 int NetworkedMultiplayerYojimbo::put_var(Variant var) {
