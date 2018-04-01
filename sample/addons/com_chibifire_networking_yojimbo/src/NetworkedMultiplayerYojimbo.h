@@ -50,7 +50,6 @@ private:
 	uint64_t numMessagesSentToClient = 0;
 	uint64_t numMessagesReceivedFromClient = 0;
 	uint64_t numMessagesReceivedFromServer = 0;
-
 	uint64_t client_id = 0;
 	uint32_t gen_unique_id_() const;
 

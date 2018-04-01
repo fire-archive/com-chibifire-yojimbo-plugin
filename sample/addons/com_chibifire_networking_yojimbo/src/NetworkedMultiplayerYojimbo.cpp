@@ -359,6 +359,7 @@ int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
 	if (!client->CanSendMessage(RELIABLE_ORDERED_CHANNEL)) {
 		return FAILED;
 	}
+	// TODO Switch between RELIABLE_ORDERED and UNRELIABLE_UNORDERED  
 	TestBlockMessage *message = (TestBlockMessage *)client->CreateMessage(TEST_BLOCK_MESSAGE);
 	if (message) {
 		message->sequence = (uint16_t)numMessagesSentToServer;
@@ -378,10 +379,6 @@ int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
 		return OK;
 	}
 	return FAILED;
-	// Switch between reliable, unreliable, and unrealiable (unsequenced)
-
-	// Send packet
-	// return status
 }
 
 // From NetworkedMultiplayerENet::_gen_unique_id()
