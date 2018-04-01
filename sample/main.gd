@@ -24,10 +24,11 @@ func _physics_process(delta):
 	yojimbo.poll()
 
 func _on_Button_pressed():
-	yojimbo.put_packet("Hello")
+	var test = [1, 2, 3, 4]
+	yojimbo.put_packet(test)
 	var packet = yojimbo.get_packet()
-	for i in packet:
-		print(i)
+	for elem in packet:
+		print(elem)
 	yojimbo.put_var("Hello")
 	print("Var: " + str(yojimbo.get_var()))
 #	yojimbo.close_connection()
