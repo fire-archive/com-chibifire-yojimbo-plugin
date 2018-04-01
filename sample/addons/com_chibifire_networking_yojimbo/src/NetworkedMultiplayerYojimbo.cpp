@@ -88,7 +88,6 @@ void NetworkedMultiplayerYojimbo::set_log_level(int level) {
 }
 
 void NetworkedMultiplayerYojimbo::close_connection() {
-
 	if (server != nullptr) {
 		server->Stop();
 	}
@@ -252,33 +251,50 @@ void NetworkedMultiplayerYojimbo::poll() {
 		if (!message) {
 			return;
 		}
-		//yojimbo_assert(message->GetId() == (uint16_t)numMessagesReceivedFromClient);
+		yojimbo_assert(message->GetId() == (uint16_t)numMessagesReceivedFromClient);
 		switch (message->GetType()) {
 			case TEST_BLOCK_MESSAGE: {
 				TestBlockMessage *blockMessage = (TestBlockMessage *)message;
-				//yojimbo_assert(blockMessage->sequence == uint16_t(numMessagesReceivedFromClient));
+				yojimbo_assert(blockMessage->sequence == uint16_t(numMessagesReceivedFromClient));
 				const int blockSize = blockMessage->GetBlockSize();
-				//const int expectedBlockSize = 1 + (int(numMessagesReceivedFromClient)) % MaxBlockSize;
-				//if (blockSize != expectedBlockSize) {
-				//	printf("error: block size mismatch. expected %d, got %d\n", expectedBlockSize, blockSize);
-				//	return;
-				//}
 				const uint8_t *blockData = blockMessage->GetBlockData();
 				yojimbo_assert(blockData);
-				//for (int i = 0; i < blockSize; ++i) {
-				//	if (blockData[i] != uint8_t(numMessagesReceivedFromClient + i)) {
-				//		printf("error: block data mismatch. expected %d, but blockData[%d] = %d\n", uint8_t(numMessagesReceivedFromClient + i), i, blockData[i]);
-				//		return;
-				//	}
-				//}
 				printf("server received message %d\n", uint16_t(numMessagesReceivedFromClient));
 				PoolByteArray block;
 				for (size_t i = 0; i < blockMessage->GetBlockSize(); i++) {
 					block.append(blockData[i]);
 				}
 				server->ReleaseMessage(client->GetClientIndex(), message);
-				//numMessagesReceivedFromClient++;
-				server_put_packet_(block);
+				numMessagesReceivedFromClient++;
+				PoolByteArray buffer = PoolByteArray(block);
+				if (!client) {
+					return;
+				}
+				if (!server) {
+					return;
+				}
+				if (!server->IsClientConnected(client->GetClientIndex())) {
+					return;
+				}
+				TestBlockMessage *message = (TestBlockMessage *)server->CreateMessage(client->GetClientIndex(), TEST_BLOCK_MESSAGE);
+				if (message) {
+					message->sequence = (uint16_t)numMessagesSentToClient;
+					const int32_t block_size = buffer.size() % MaxBlockSize;
+					uint8_t *block_data = server->AllocateBlock(client->GetClientIndex(), block_size);
+					if (!block_data) {
+						server->ReleaseMessage(client->GetClientIndex(), message);
+						return;
+					}
+					for (int j = 0; j < block_size; ++j) {
+						block_data[j] = buffer[j] & 0xff;
+					}
+					server->AttachBlockToMessage(client->GetClientIndex(), message, block_data, block_size);
+					server->SendMessage(client->GetClientIndex(), RELIABLE_ORDERED_CHANNEL, message);
+					numMessagesSentToClient++;
+					Godot::print("Sent packet from server");
+					return;
+				}
+				return;
 				break;
 			}
 		}
@@ -300,29 +316,23 @@ PoolByteArray NetworkedMultiplayerYojimbo::get_packet() {
 	if (!message) {
 		return PoolByteArray();
 	}
-	//yojimbo_assert(message->GetId() == (uint16_t)numMessagesReceivedFromServer);
+	yojimbo_assert(message->GetId() == (uint16_t)numMessagesReceivedFromServer);
 
 	if (message->GetType() != TEST_BLOCK_MESSAGE) {
 		return PoolByteArray();
 	}
 	TestBlockMessage *blockMessage = (TestBlockMessage *)message;
-	//yojimbo_assert(blockMessage->sequence == uint16_t(numMessagesReceivedFromServer));
+	yojimbo_assert(blockMessage->sequence == uint16_t(numMessagesReceivedFromServer));
 	const int blockSize = blockMessage->GetBlockSize();
 	const uint8_t *blockData = blockMessage->GetBlockData();
 	yojimbo_assert(blockData);
-	//for (int i = 0; i < blockSize; ++i) {
-	//	if (blockData[i] != uint8_t(numMessagesReceivedFromServer + i)) {
-	//		printf("error: block data mismatch. expected %d, but blockData[%d] = %d\n", uint8_t(numMessagesReceivedFromServer + i), i, blockData[i]);
-	//		return PoolByteArray();
-	//	}
-	//}
 	PoolByteArray block;
 	for (size_t i = 0; i < blockMessage->GetBlockSize(); i++) {
 		block.append(blockData[i] & 0xFF);
 	}
 	printf("client received message size %d\n", block.size());
 	client->ReleaseMessage(message);
-	//numMessagesReceivedFromServer++;
+	numMessagesReceivedFromServer++;
 	return block;
 }
 
@@ -336,7 +346,7 @@ Variant NetworkedMultiplayerYojimbo::get_var() {
 	return variant;
 }
 
-int32_t NetworkedMultiplayerYojimbo::client_put_packet_(PoolByteArray buffer) {
+int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
 	if (buffer.size() == 0) {
 		return FAILED;
 	}
@@ -368,41 +378,6 @@ int32_t NetworkedMultiplayerYojimbo::client_put_packet_(PoolByteArray buffer) {
 		return OK;
 	}
 	return FAILED;
-}
-
-int32_t NetworkedMultiplayerYojimbo::server_put_packet_(PoolByteArray buffer) {
-	if (!client) {
-		return FAILED;
-	}
-	if (!server) {
-		return FAILED;
-	}
-	if (!server->IsClientConnected(client->GetClientIndex())) {
-		return FAILED;
-	}
-	TestBlockMessage *message = (TestBlockMessage *)server->CreateMessage(client->GetClientIndex(), TEST_BLOCK_MESSAGE);
-	if (message) {
-		message->sequence = (uint16_t)numMessagesSentToClient;
-		const int32_t block_size = buffer.size() % MaxBlockSize;
-		uint8_t *block_data = server->AllocateBlock(client->GetClientIndex(), block_size);
-		if (!block_data) {
-			server->ReleaseMessage(client->GetClientIndex(), message);
-			return FAILED;
-		}
-		for (int j = 0; j < block_size; ++j) {
-			block_data[j] = buffer[j] & 0xff;
-		}
-		server->AttachBlockToMessage(client->GetClientIndex(), message, block_data, block_size);
-		server->SendMessage(client->GetClientIndex(), RELIABLE_ORDERED_CHANNEL, message);
-		numMessagesSentToClient++;
-		Godot::print("Sent packet from server");
-		return OK;
-	}
-	return FAILED;
-}
-
-int NetworkedMultiplayerYojimbo::put_packet(PoolByteArray buffer) {
-	return client_put_packet_(buffer);
 	// Switch between reliable, unreliable, and unrealiable (unsequenced)
 
 	// Send packet

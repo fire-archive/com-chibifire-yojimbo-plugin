@@ -53,8 +53,6 @@ private:
 
 	uint64_t client_id = 0;
 	uint32_t gen_unique_id_() const;
-	int32_t client_put_packet_(PoolByteArray buffer);
-	int32_t server_put_packet_(PoolByteArray buffer);
 
 public:
 	NetworkedMultiplayerYojimbo() :
