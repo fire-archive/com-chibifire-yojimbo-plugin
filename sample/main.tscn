@@ -1,7 +1,6 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
-[ext_resource path="res://addons/com_chibifire_networking_yojimbo/com_chibifire_networking_yojimbo.gdns" type="Script" id=2]
 
 [sub_resource type="SpatialMaterial" id=1]
 
@@ -89,7 +88,6 @@ size_flags_horizontal = 1
 size_flags_vertical = 1
 script = ExtResource( 1 )
 _sections_unfolded = [ "Hint" ]
-native_yojimbo = ExtResource( 2 )
 
 [node name="Button" type="Button" parent="." index="0"]
 
