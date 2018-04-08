@@ -1,3 +1,0 @@
-bazel build //:com_chibifire_networking_yojimbo.dll
-robocopy bazel-bin sample\addons\com_chibifire_networking_yojimbo\bin\windows.64 com_chibifire_networking_yojimbo.pdb
-robocopy bazel-bin sample\addons\com_chibifire_networking_yojimbo\bin\windows.64 com_chibifire_networking_yojimbo.dll
