@@ -3,8 +3,8 @@ var yojimbo
 
 func _ready():
 	yojimbo = NetworkedMultiplayerYojimbo.new()
-	yojimbo.create_server(40000, 2, 4000, 4000)
-	get_tree().set_network_peer(yojimbo)
+	#yojimbo.create_server(40000, 2, 4000, 4000)
+	#get_tree().set_network_peer(yojimbo)
 
 	var timer = Timer.new()
 	timer.connect("timeout", self, "on_timer_timeout") 
@@ -17,15 +17,14 @@ func _physics_process(delta):
 	yojimbo.poll()
 	
 func on_timer_timeout():
-	yojimbo.create_client("127.0.0.1", 40000, 4000, 4000)
+#	print("Status: " + String(yojimbo.get_connection_status()))
+	yojimbo.create_client("127.0.0.1", 8080, 4000, 4000)
 
 func _on_Button_pressed():
 	var test = [1, 2, 3, 4]
 	yojimbo.put_packet(test)
 	var packet = yojimbo.get_packet()
 	for elem in packet:
-		print(elem)
+		print("Elem: " + elem)
 	yojimbo.put_var("Hello")
 	print("Var: " + str(yojimbo.get_var()))
-#	yojimbo.close_connection()
-
